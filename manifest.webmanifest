@@ -1,7 +1,7 @@
 {
   "name": "Verdure",
   "short_name": "Verdure",
-  "description": "Identifie tes plantes, suis l'arrosage et trouve des pots à imprimer en 3D.",
+  "description": "Identifie tes plantes, suis l'arrosage, imprime pots et tuteurs en 3D.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

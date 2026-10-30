@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Verdure</title>
-<meta name="description" content="Identifie tes plantes, suis l'arrosage et trouve des pots à imprimer en 3D.">
+<meta name="description" content="Identifie tes plantes, suis l'arrosage, imprime pots et tuteurs en 3D.">
 <meta name="theme-color" content="#2f6b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -18,7 +18,8 @@
 :root{
   --bg:#f3f6f1; --surface:#ffffff; --surface-2:#e9f0e6; --text:#1d2a1f; --muted:#5f6f62;
   --accent:#2f6b3a; --accent-2:#4f9a5c; --accent-soft:#dcecd9; --line:#d5e0d2;
-  --late:#c0392b; --late-soft:#fbe3df; --due:#c77c0e; --due-soft:#fdf0d8; --ok:#2f6b3a;
+  --late:#c0392b; --late-soft:#fbe3df; --due:#b06a00; --due-soft:#fdf0d8; --ok:#2f6b3a;
+  --info-soft:#e1ecf7;
   --radius:16px; --shadow:0 2px 10px rgba(30,60,35,.08);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
@@ -27,7 +28,7 @@
     --bg:#111712; --surface:#1a221b; --surface-2:#223024; --text:#e6efe6; --muted:#9db09f;
     --accent:#7cc487; --accent-2:#5fae6c; --accent-soft:#24402a; --line:#2c3a2e;
     --late:#ff7b6b; --late-soft:#3d1f1b; --due:#f0b14a; --due-soft:#3b2e17; --ok:#7cc487;
-    --shadow:0 2px 10px rgba(0,0,0,.35);
+    --info-soft:#1d2b3a; --shadow:0 2px 10px rgba(0,0,0,.35);
   }
 }
 *{box-sizing:border-box}
@@ -36,29 +37,33 @@ body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-syste
 button,input,select,textarea{font:inherit;color:inherit}
 img{max-width:100%;display:block}
 a{color:var(--accent)}
+code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
 
 /* ===== Structure ===== */
-.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + var(--safe-t)) 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
-.top h1{margin:0;font-size:1.3rem}
-.quota{font-size:.75rem;color:var(--muted)}
-main{max-width:680px;margin:0 auto;padding:14px 16px}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + var(--safe-t)) 16px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.top h1{margin:0;font-size:1.3rem;flex:1}
+.quota{font-size:.75rem;color:var(--muted);text-align:right}
+.icon-btn{border:0;background:var(--surface-2);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.05rem;flex:none}
+main{max-width:720px;margin:0 auto;padding:14px 16px}
 .tab{display:none}
 .tab.active{display:block;animation:fade .2s}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 h2{font-size:1.15rem;margin:.2em 0 .6em}
 h3{font-size:1rem;margin:0 0 .5em}
 .muted{color:var(--muted)} .small{font-size:.85rem}
+.section-title{display:flex;align-items:center;gap:8px;margin:18px 0 8px}
+.section-title h2{flex:1;margin:0}
 
 /* ===== Barre d'onglets ===== */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
-.tabbar button{flex:1;border:0;background:none;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;color:var(--muted);cursor:pointer;position:relative}
-.tabbar button .ico{font-size:1.35rem;line-height:1}
+.tabbar button{flex:1;border:0;background:none;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.7rem;color:var(--muted);cursor:pointer;position:relative}
+.tabbar button .ico{font-size:1.3rem;line-height:1}
 .tabbar button[aria-selected="true"]{color:var(--accent);font-weight:600}
 .tabbar .badge{position:absolute;top:4px;left:calc(50% + 6px);background:var(--late);color:#fff;border-radius:10px;font-size:.65rem;padding:0 5px;min-width:16px;line-height:16px}
 
 /* ===== Composants ===== */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:11px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;transition:transform .1s,opacity .2s;text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:11px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;transition:transform .1s,opacity .2s;text-decoration:none;text-align:center}
 @media (prefers-color-scheme:dark){.btn{color:#0f1a10}}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -71,14 +76,19 @@ h3{font-size:1rem;margin:0 0 .5em}
 :focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}
 
 .seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;margin-bottom:12px}
-.seg button{flex:1;border:0;background:none;padding:9px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
 .field{display:block;margin-bottom:10px}
-.field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
-.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.field > span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+.field input:not([type=checkbox]):not([type=range]),.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .field textarea{min-height:70px;resize:vertical}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field output{float:right;font-weight:600;color:var(--text)}
+.check{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 
 /* Photos à analyser */
 .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:12px 0}
@@ -89,13 +99,14 @@ h3{font-size:1rem;margin:0 0 .5em}
 .empty{border:2px dashed var(--line);border-radius:var(--radius);padding:22px;text-align:center;color:var(--muted)}
 
 /* Résultats */
-.result{display:flex;gap:12px;align-items:center;cursor:pointer;text-align:left;width:100%;font:inherit}
+.result{display:flex;gap:12px;align-items:center;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
 .result img,.result .ph{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none;background:var(--surface-2);display:grid;place-items:center;font-size:1.6rem}
 .result .info{flex:1;min-width:0}
 .result .sci{font-style:italic;color:var(--muted);font-size:.85rem}
 .bar{height:6px;background:var(--surface-2);border-radius:3px;margin-top:6px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent-2)}
+.bar i{display:block;height:100%;background:var(--accent-2);transition:width .3s}
 .note{background:var(--due-soft);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.9rem;margin-bottom:12px}
+.info-box{background:var(--info-soft);border-radius:12px;padding:10px 12px;font-size:.9rem;margin-bottom:12px}
 .warn{background:var(--late-soft);border-radius:10px;padding:8px 10px;font-size:.88rem}
 .tip{background:var(--accent-soft);border-radius:10px;padding:8px 10px;margin:.6em 0}
 
@@ -113,7 +124,7 @@ details ul{padding-left:18px;margin:.5em 0}
 
 /* Collection */
 .plants{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:left;padding:0;box-shadow:var(--shadow)}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:left;padding:0;box-shadow:var(--shadow);color:inherit}
 .pcard img,.pcard .ph{width:100%;aspect-ratio:1;object-fit:cover;background:var(--surface-2);display:grid;place-items:center;font-size:2.4rem}
 .pcard .body{padding:8px 10px}
 .pcard .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -122,16 +133,37 @@ details ul{padding-left:18px;margin:.5em 0}
 .pill.due{background:var(--due-soft);color:var(--due)}
 .pill.soon{background:var(--surface-2);color:var(--text)}
 .pill.ok{background:var(--accent-soft);color:var(--ok)}
+.pill.info{background:var(--info-soft);color:var(--text)}
 
-/* Arrosage */
+/* Lignes (arrosage, boutures, pièces) */
 .wrow{display:flex;align-items:center;gap:10px}
 .wrow img,.wrow .ph{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none;background:var(--surface-2);display:grid;place-items:center;font-size:1.4rem}
 .wrow .info{flex:1;min-width:0}
 .wrow .actions{display:flex;flex-direction:column;gap:5px}
+.wrow.done{opacity:.55}
+.group-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:16px 0 6px;font-weight:700}
+
+/* Journal photo */
+.timeline{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px}
+.timeline button{flex:none;border:0;padding:0;background:none;cursor:pointer;text-align:center;color:inherit}
+.timeline img{width:84px;height:84px;object-fit:cover;border-radius:10px}
+.timeline span{font-size:.72rem;color:var(--muted)}
+.compare{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;margin-top:8px;--pos:50%}
+.compare img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.compare .before{clip-path:inset(0 calc(100% - var(--pos)) 0 0)}
+.compare::after{content:"";position:absolute;top:0;bottom:0;left:var(--pos);width:2px;background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5)}
+.compare .tag{position:absolute;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;padding:2px 8px;border-radius:8px}
+.compare .tag.l{left:8px} .compare .tag.r{right:8px}
+
+/* Atelier 3D */
+.preview{width:100%;aspect-ratio:4/3;background:var(--surface-2);border-radius:12px;touch-action:none;cursor:grab;display:block}
+.stake-preview{width:100%;aspect-ratio:3/4;background:var(--surface-2);border-radius:12px;display:block}
+.stats{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
 
 /* Feuille modale */
-dialog{border:0;padding:0;width:min(680px,100%);max-height:92vh;border-radius:20px 20px 0 0;margin:auto auto 0;background:var(--bg);color:var(--text)}
-@media (min-width:700px){dialog{border-radius:20px;margin:auto}}
+dialog{border:0;padding:0;width:min(720px,100%);max-height:92vh;border-radius:20px 20px 0 0;margin:auto auto 0;background:var(--bg);color:var(--text)}
+@media (min-width:760px){dialog{border-radius:20px;margin:auto}}
 dialog::backdrop{background:rgba(0,0,0,.45)}
 .sheet-head{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;z-index:2;border-bottom:1px solid var(--line)}
 .sheet-head h2{margin:0;font-size:1.1rem}
@@ -144,6 +176,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
+@media (max-width:380px){.grid3{grid-template-columns:1fr 1fr}}
 @media print{.tabbar,.top,.btn{display:none}}
 </style>
 </head>
@@ -152,6 +185,7 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
 <header class="top">
   <h1>🌿 Verdure</h1>
   <span class="quota" id="quota" aria-live="polite"></span>
+  <button class="icon-btn" data-action="tab" data-tab="settings" aria-label="Réglages">⚙️</button>
 </header>
 
 <main>
@@ -161,9 +195,8 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
       <button type="button" data-action="mode" data-mode="identify" aria-pressed="true">🔍 Identifier</button>
       <button type="button" data-action="mode" data-mode="diagnose" aria-pressed="false">🩺 Diagnostiquer</button>
     </div>
-    <p class="muted small" id="mode-help">Photographie une feuille ou une fleur, bien nette et de près. Jusqu'à 5 photos de la même plante améliorent le résultat.</p>
+    <p class="muted small" id="mode-help"></p>
     <div id="diag-context"></div>
-
     <div class="row">
       <label class="btn"><span aria-hidden="true">📷</span> Photo
         <input id="in-camera" class="sr" type="file" accept="image/*" capture="environment">
@@ -172,34 +205,178 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
         <input id="in-gallery" class="sr" type="file" accept="image/*" multiple>
       </label>
     </div>
-
     <div id="shots" class="shots" aria-live="polite"></div>
     <button id="btn-analyze" class="btn block" data-action="analyze" disabled>Identifier la plante</button>
     <div id="scan-result" style="margin-top:16px" aria-live="polite"></div>
   </section>
 
-  <!-- ========== COLLECTION ========== -->
+  <!-- ========== PLANTES & BOUTURES ========== -->
   <section id="tab-plants" class="tab" aria-labelledby="t-plants">
-    <div class="row" style="align-items:center;margin-bottom:10px">
-      <h2 style="flex:1;margin:0">Mes plantes</h2>
-      <button class="btn sm ghost" data-action="manual-add" style="flex:none">＋ Ajouter</button>
+    <div class="seg" role="group" aria-label="Affichage">
+      <button type="button" data-action="pview" data-v="plants" aria-pressed="true">🪴 Mes plantes</button>
+      <button type="button" data-action="pview" data-v="cuttings" aria-pressed="false">✂️ Boutures</button>
     </div>
-    <div id="plants"></div>
+    <div id="pview-plants">
+      <div class="row" style="justify-content:flex-end;margin-bottom:10px">
+        <button class="btn sm ghost" data-action="manual-add" style="flex:none">＋ Ajouter une plante</button>
+      </div>
+      <div id="plants"></div>
+    </div>
+    <div id="pview-cuttings" hidden>
+      <div class="row" style="justify-content:flex-end;margin-bottom:10px">
+        <button class="btn sm ghost" data-action="cutting-add" style="flex:none">＋ Nouvelle bouture</button>
+      </div>
+      <div id="cuttings"></div>
+    </div>
   </section>
 
   <!-- ========== ARROSAGE ========== -->
   <section id="tab-water" class="tab" aria-labelledby="t-water">
-    <h2>Arrosage</h2>
+    <div id="wx"></div>
+    <div class="seg" role="group" aria-label="Vue arrosage">
+      <button type="button" data-action="wview" data-v="list" aria-pressed="true">📋 À venir</button>
+      <button type="button" data-action="wview" data-v="round" aria-pressed="false">🚶 Tournée</button>
+    </div>
     <p class="muted small" id="season-note"></p>
     <div id="water"></div>
+    <div id="water-cuttings"></div>
+    <div class="card" style="margin-top:18px">
+      <h3>📅 Rappels sur l'iPhone</h3>
+      <p class="small">Exporte ton planning dans le Calendrier : tu reçois une vraie notification le jour de l'arrosage.</p>
+      <div class="grid2">
+        <label class="field"><span>Heure du rappel</span><input id="ics-hour" type="time" value="09:00"></label>
+        <div class="field"><span>&nbsp;</span><button class="btn block" data-action="ics">Exporter (.ics)</button></div>
+      </div>
+      <details><summary>Bon à savoir</summary><ul class="small">
+        <li>Le rappel suit un rythme fixe : si tu arroses en avance ou en retard, ou au changement de saison, ré-exporte.</li>
+        <li>Range ces rappels dans un calendrier « Verdure » dédié : tu pourras le supprimer d'un coup avant de ré-importer, sans doublons.</li>
+      </ul></details>
+    </div>
+  </section>
+
+  <!-- ========== ATELIER 3D ========== -->
+  <section id="tab-atelier" class="tab" aria-labelledby="t-atelier">
+    <div class="seg" role="group" aria-label="Atelier">
+      <button type="button" data-action="aview" data-v="pot" aria-pressed="true">🏺 Pot sur mesure</button>
+      <button type="button" data-action="aview" data-v="stake" aria-pressed="false">🏷️ Tuteur QR</button>
+    </div>
+
+    <div id="aview-pot">
+      <canvas id="pot-canvas" class="preview" aria-label="Aperçu 3D du pot, glisse pour faire tourner"></canvas>
+      <p class="small muted" style="text-align:center;margin:4px 0 0">Glisse pour faire tourner</p>
+      <div class="stats" id="pot-stats"></div>
+      <div id="pot-warn"></div>
+      <div class="dl" id="pot-dl"></div>
+
+      <form id="pot-form" class="card" style="margin-top:12px" onsubmit="return false">
+        <div class="grid2">
+          <label class="field"><span>Pour la plante</span><select id="pp-plant"></select></label>
+          <label class="field"><span>Type</span>
+            <select id="pp-type">
+              <option value="saucer">Pot + soucoupe</option>
+              <option value="simple">Pot simple</option>
+              <option value="self">Auto-arrosant (2 pièces)</option>
+              <option value="cache">Cache-pot (sans trou)</option>
+            </select></label>
+        </div>
+        <div class="grid3">
+          <label class="field"><span>Ø intérieur (cm)</span><input id="pp-d" type="number" min="4" max="23" step="0.5" value="12" inputmode="decimal"></label>
+          <label class="field"><span>Hauteur (cm)</span><input id="pp-h" type="number" min="3" max="22" step="0.5" value="11" inputmode="decimal"></label>
+          <label class="field"><span>Paroi (mm)</span><input id="pp-wall" type="number" min="1.2" max="5" step="0.2" value="2.4" inputmode="decimal"></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>Évasement <output id="o-taper"></output></span><input id="pp-taper" type="range" min="0" max="25" step="1" value="12"></label>
+          <label class="field"><span>Trou de drainage <output id="o-hole"></output></span><input id="pp-hole" type="range" min="0" max="30" step="1" value="12"></label>
+        </div>
+        <label class="field"><span>Motif</span>
+          <select id="pp-pattern">
+            <option value="smooth">Lisse</option>
+            <option value="ribs">Côtes verticales</option>
+            <option value="twist" selected>Côtes torsadées</option>
+            <option value="facets">Facettes (low-poly)</option>
+            <option value="twistfacets">Facettes torsadées</option>
+            <option value="diamond">Losanges</option>
+            <option value="waves">Vagues horizontales</option>
+          </select></label>
+        <div class="grid3" id="pattern-opts">
+          <label class="field"><span>Relief <output id="o-amp"></output></span><input id="pp-amp" type="range" min="0.5" max="6" step="0.5" value="2.5"></label>
+          <label class="field"><span>Nombre <output id="o-ribs"></output></span><input id="pp-ribs" type="range" min="3" max="40" step="1" value="18"></label>
+          <label class="field"><span>Torsion <output id="o-twist"></output></span><input id="pp-twist" type="range" min="-1" max="1" step="0.05" value="0.25"></label>
+        </div>
+        <details><summary>Conseils d'impression</summary><ul class="small">
+          <li><b>PETG</b> pour tout ce qui touche l'eau ; ASA à l'extérieur (UV). Le PLA, seulement pour un cache-pot.</li>
+          <li>Étanchéité : 3–4 périmètres, fond plein (au moins 5 couches). Le cache-pot s'imprime aussi très bien en mode vase.</li>
+          <li>Pas de supports nécessaires : imprime chaque pièce posée sur son fond.</li>
+          <li>Auto-arrosant : passe une mèche en coton (lacet, corde) dans le trou du pot intérieur. Pour remplir la réserve, soulève le pot.</li>
+        </ul></details>
+      </form>
+    </div>
+
+    <div id="aview-stake" hidden>
+      <div id="stake-empty"></div>
+      <div id="stake-ui">
+        <canvas id="stake-canvas" class="stake-preview" aria-label="Aperçu du tuteur"></canvas>
+        <div class="stats" id="stake-stats"></div>
+        <div id="stake-warn"></div>
+        <div class="dl">
+          <button class="btn" data-action="stake-dl" data-part="base">⬇️ Base (blanc)</button>
+          <button class="btn" data-action="stake-dl" data-part="relief">⬇️ Relief (noir)</button>
+          <button class="btn ghost" data-action="stake-dl" data-part="all">⬇️ Tout en un</button>
+          <button class="btn ghost" data-action="stake-dl" data-part="png">🖼️ Étiquette papier</button>
+        </div>
+        <form id="stake-form" class="card" style="margin-top:12px" onsubmit="return false">
+          <label class="field"><span>Plante</span><select id="st-plant"></select></label>
+          <div class="grid2">
+            <label class="field"><span>Taille du QR <output id="o-qr"></output></span><input id="st-size" type="range" min="28" max="50" step="1" value="36"></label>
+            <label class="field"><span>2ᵉ ligne</span>
+              <select id="st-line2">
+                <option value="interval">Rythme d'arrosage</option>
+                <option value="sci">Nom scientifique</option>
+                <option value="room">Pièce</option>
+                <option value="none">Rien</option>
+              </select></label>
+          </div>
+          <label class="field"><span>Adresse de l'app (encodée dans le QR)</span><input id="st-url" type="url"></label>
+          <details><summary>Imprimer en deux couleurs (ACE Pro)</summary><ol class="steps small">
+            <li>Télécharge <b>Base</b> et <b>Relief</b>.</li>
+            <li>Dans le slicer, importe les deux fichiers <b>en même temps</b> et accepte « charger comme un seul objet à plusieurs pièces ».</li>
+            <li>Attribue un filament clair à la base et un filament foncé au relief. Le QR doit être foncé sur fond clair pour être lisible.</li>
+            <li>Sans multicolore : « Tout en un » + changement de filament à la hauteur indiquée ci-dessus.</li>
+          </ol></details>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== MAISON ========== -->
+  <section id="tab-home" class="tab" aria-labelledby="t-home">
+    <div class="section-title" style="margin-top:0"><h2>☀️ Mes pièces</h2>
+      <button class="btn sm ghost" data-action="room-add">＋ Pièce</button></div>
+    <p class="small muted">Estime la lumière de chaque endroit : l'app vérifie ensuite que chaque plante est au bon endroit.</p>
+    <div id="rooms"></div>
+    <div id="misplaced"></div>
+
+    <div class="section-title"><h2>🔎 Que mettre ici ?</h2></div>
+    <div class="card">
+      <label class="field"><span>Endroit</span><select id="sg-light"></select></label>
+      <label class="field"><span>Entretien</span>
+        <select id="sg-effort">
+          <option value="any">Peu importe</option>
+          <option value="medium">Raisonnable</option>
+          <option value="easy">Le moins possible</option>
+        </select></label>
+      <label class="check"><input type="checkbox" id="sg-pet"> Sans danger pour les animaux</label>
+      <label class="check"><input type="checkbox" id="sg-dry"> Air sec (chauffage)</label>
+    </div>
+    <div id="suggest"></div>
   </section>
 
   <!-- ========== RÉGLAGES ========== -->
-  <section id="tab-settings" class="tab" aria-labelledby="t-settings">
+  <section id="tab-settings" class="tab" aria-label="Réglages">
     <h2>Réglages</h2>
     <div class="card">
       <h3>🔑 Clé API PlantNet</h3>
-      <label class="field"><span>Ta clé (stockée uniquement sur ce téléphone)</span>
+      <label class="field"><span>Ta clé (stockée uniquement sur cet appareil)</span>
         <input id="api-key" type="password" autocomplete="off" placeholder="2b10…">
       </label>
       <div class="row">
@@ -209,17 +386,29 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
       <details>
         <summary>Comment obtenir une clé gratuite</summary>
         <ol class="steps small">
-          <li>Crée un compte sur <a href="https://my.plantnet.org" target="_blank" rel="noopener">my.plantnet.org</a>.</li>
-          <li>Dans ton compte, copie ta clé API (offre gratuite : 500 identifications par jour).</li>
-          <li>Dans les réglages de la clé, autorise le domaine de ton app (ex. <code>verdure-xxx.vercel.app</code>), sinon le navigateur bloque l'appel.</li>
+          <li>Crée un compte sur <a href="https://my.plantnet.org" target="_blank" rel="noopener">my.plantnet.org</a> et copie ta clé (Settings → API key).</li>
+          <li>Active « expose my API key » et ajoute l'adresse complète de l'app dans Authorized domains, <b>avec</b> <code>https://</code>.</li>
           <li>Colle la clé ici et enregistre.</li>
         </ol>
       </details>
     </div>
 
     <div class="card">
+      <h3>🌦️ Météo</h3>
+      <p class="small muted">Sert aux alertes gel, canicule et pluie (Open-Meteo, gratuit, sans compte).</p>
+      <div class="grid2">
+        <label class="field"><span>Latitude</span><input id="wx-lat" type="number" step="0.0001" inputmode="decimal"></label>
+        <label class="field"><span>Longitude</span><input id="wx-lon" type="number" step="0.0001" inputmode="decimal"></label>
+      </div>
+      <div class="row">
+        <button class="btn" data-action="wx-save">Enregistrer</button>
+        <button class="btn ghost" data-action="wx-geo">📍 Ma position</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h3>💾 Sauvegarde</h3>
-      <p class="small muted">iOS peut effacer les données d'une app web peu utilisée. Exporte de temps en temps.</p>
+      <p class="small muted">iOS peut effacer les données d'une app web peu utilisée, et l'app de l'écran d'accueil ne partage pas ses données avec Safari ni avec ton ordinateur. Exporte de temps en temps, et importe le fichier là où tu en as besoin.</p>
       <div class="row">
         <button class="btn ghost" data-action="export">Exporter</button>
         <label class="btn ghost">Importer<input id="in-import" class="sr" type="file" accept="application/json,.json"></label>
@@ -228,19 +417,19 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
 
     <div class="card">
       <h3>⚠️ Réinitialiser</h3>
-      <p class="small muted">Supprime toutes les plantes enregistrées (la clé API est conservée).</p>
+      <p class="small muted">Supprime plantes, photos, boutures et pièces (la clé API est conservée).</p>
       <button class="btn danger" data-action="reset">Tout effacer</button>
     </div>
-
-    <p class="small muted">Identification et diagnostic : Pl@ntNet (Cirad, INRAE, Inria, IRD). Fiches d'entretien indicatives, par genre ou famille.</p>
+    <p class="small muted">Identification et diagnostic : Pl@ntNet (Cirad, INRAE, Inria, IRD). Météo : Open-Meteo. Fiches d'entretien indicatives, par genre ou famille.</p>
   </section>
 </main>
 
 <nav class="tabbar" role="tablist" aria-label="Navigation">
   <button id="t-scan" role="tab" aria-selected="true" aria-controls="tab-scan" data-action="tab" data-tab="scan"><span class="ico" aria-hidden="true">📷</span>Scanner</button>
-  <button id="t-plants" role="tab" aria-selected="false" aria-controls="tab-plants" data-action="tab" data-tab="plants"><span class="ico" aria-hidden="true">🪴</span>Mes plantes</button>
+  <button id="t-plants" role="tab" aria-selected="false" aria-controls="tab-plants" data-action="tab" data-tab="plants"><span class="ico" aria-hidden="true">🪴</span>Plantes</button>
   <button id="t-water" role="tab" aria-selected="false" aria-controls="tab-water" data-action="tab" data-tab="water"><span class="ico" aria-hidden="true">💧</span>Arrosage<span class="badge" id="water-badge" hidden></span></button>
-  <button id="t-settings" role="tab" aria-selected="false" aria-controls="tab-settings" data-action="tab" data-tab="settings"><span class="ico" aria-hidden="true">⚙️</span>Réglages</button>
+  <button id="t-atelier" role="tab" aria-selected="false" aria-controls="tab-atelier" data-action="tab" data-tab="atelier"><span class="ico" aria-hidden="true">🖨️</span>Atelier</button>
+  <button id="t-home" role="tab" aria-selected="false" aria-controls="tab-home" data-action="tab" data-tab="home"><span class="ico" aria-hidden="true">🏠</span>Maison</button>
 </nav>
 
 <dialog id="sheet" aria-labelledby="sheet-title">
@@ -256,8 +445,8 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
 <script>
 'use strict';
 /* =========================================================
-   1. DONNÉES : fiches d'entretien et pots imprimables
-   Format : [nom, lumière, arrosage (jours, en saison), humidité, conseil, type de pot, toxique animaux 1/0/null]
+   1. DONNÉES
+   Fiche : [nom, lumière, arrosage (jours, en saison), humidité, conseil, type de pot, toxique animaux 1/0/null]
    ========================================================= */
 const CARE = {
   monstera:['Monstera','indirecte',8,'moyenne','Laisse sécher les 3 premiers cm entre deux arrosages. Un tuteur aide les grandes feuilles.','standard',1],
@@ -314,7 +503,7 @@ const CARE = {
   pelargonium:['Géranium','soleil',4,'faible','Retire les fleurs fanées, hiverne hors gel.','standard',1],
   rosa:['Rosier','soleil',4,'moyenne','Arrose au pied, jamais le feuillage.','tall',0]
 };
-// Synonymes de genres (noms botaniques récents ou anciens)
+// Synonymes (noms botaniques récents ou anciens) : mêmes fiches
 Object.assign(CARE,{sansevieria:CARE.dracaena, calathea:CARE.goeppertia, haworthiopsis:CARE.haworthia,
   saintpaulia:CARE.streptocarpus, heptapleurum:CARE.schefflera, rosmarinus:CARE.salvia});
 
@@ -341,6 +530,9 @@ const FAMILY = {
 };
 const DEFAULT_CARE = ['Plante','indirecte',7,'moyenne','Arrose quand les 2–3 premiers cm de terre sont secs.','standard',null];
 
+// Lumière : besoins des plantes et niveaux des pièces sur la même échelle 0–4
+const LIGHT_KEYS = ['tolerante','mi-ombre','indirecte','vive','soleil'];
+const LVL = {tolerante:0,'mi-ombre':1,indirecte:2,vive:3,soleil:4};
 const LIGHT = {
   soleil:'☀️ Plein soleil (fenêtre sud/ouest)',
   vive:'🌤️ Lumière vive, un peu de soleil doux',
@@ -348,17 +540,24 @@ const LIGHT = {
   'mi-ombre':'🌥️ Mi-ombre',
   tolerante:'🌑 Tolère la faible lumière'
 };
+const ROOM_LVL = ['🌑 Sombre','🌥️ Mi-ombre','⛅ Lumineux, indirect','🌤️ Très lumineux','☀️ Plein soleil'];
+
+// Température minimale supportée (°C), pour les alertes gel des plantes d'extérieur
+const MIN_TEMP = {olea:-7, lavandula:-10, thymus:-12, salvia:-8, rosmarinus:-8, rosa:-15, hedera:-15, mentha:-15,
+  petroselinum:-5, yucca:-5, citrus:2, pelargonium:2, ocimum:10, solanum:8, capsicum:10, aloe:5, echeveria:3,
+  crassula:5, kalanchoe:8, beaucarnea:5, haworthia:5, euphorbia:5};
+const MIN_TEMP_FAMILY = {cactaceae:5, crassulaceae:3, lamiaceae:0, rosaceae:-10};
 
 const POTS = {
-  drainage:{t:'Pot ultra-drainant',d:'Plusieurs trous au fond, petits pieds pour surélever, pas de réservoir.',q:'succulent planter drainage'},
-  selfwater:{t:'Pot auto-arrosant',d:'Réserve d’eau + mèche : terre fraîche en continu sans la détremper.',q:'self watering planter'},
-  orchid:{t:'Pot à orchidée ajouré',d:'Parois à fentes pour aérer les racines, à glisser dans un cache-pot.',q:'orchid pot'},
-  hanging:{t:'Suspension / pot d’étagère',d:'Pour une plante retombante : pot suspendu ou à poser en hauteur, soucoupe intégrée.',q:'hanging planter'},
-  tall:{t:'Pot haut et stable',d:'Pot profond à base large, pour une plante haute qui risque de basculer.',q:'tall planter'},
-  herb:{t:'Jardinière d’aromates',d:'Bac de rebord de fenêtre, trous de drainage et soucoupe.',q:'herb planter'},
-  standard:{t:'Pot avec soucoupe intégrée',d:'Pot classique avec soucoupe clipsée ou d’un seul tenant.',q:'planter with saucer'}
+  drainage:{t:'Pot ultra-drainant',d:'Grand trou de drainage, soucoupe surélevée, pas de réservoir.',q:'succulent planter drainage',type:'saucer',hole:16},
+  selfwater:{t:'Pot auto-arrosant',d:'Réserve d’eau + mèche : terre fraîche en continu sans la détremper.',q:'self watering planter',type:'self',hole:10},
+  orchid:{t:'Pot à orchidée',d:'Large trou pour aérer les racines, dans un cache-pot.',q:'orchid pot',type:'saucer',hole:24},
+  hanging:{t:'Pot d’étagère',d:'Pour plante retombante : à poser en hauteur, soucoupe intégrée.',q:'hanging planter',type:'saucer',hole:12},
+  tall:{t:'Pot haut et stable',d:'Pot profond à base large pour une plante haute.',q:'tall planter',type:'simple',hole:14},
+  herb:{t:'Pot d’aromatique',d:'Trou de drainage et soucoupe, pour le rebord de fenêtre.',q:'herb planter',type:'saucer',hole:12},
+  standard:{t:'Pot avec soucoupe',d:'Pot classique avec soucoupe.',q:'planter with saucer',type:'saucer',hole:12}
 };
-const PRINTER_MAX = 24; // cm, plateau Kobra 3 = 25 × 25 cm
+const BED = {x:250, y:250, z:260}; // Anycubic Kobra 3 (mm)
 
 /* =========================================================
    2. UTILITAIRES
@@ -366,50 +565,266 @@ const PRINTER_MAX = 24; // cm, plateau Kobra 3 = 25 × 25 cm
 const $ = s => document.querySelector(s);
 const DAY = 86400000;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
 const startOfDay = t => { const d = new Date(t); d.setHours(0,0,0,0); return d.getTime(); };
 const fmtDate = t => new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+const fmtDateY = t => new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
 const isWinter = () => [10,11,0,1].includes(new Date().getMonth()); // nov → fév
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+const slug = s => String(s||'plante').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30) || 'plante';
+const fr = (n, d=1) => Number(n).toLocaleString('fr-FR',{maximumFractionDigits:d});
 const ls = {
   get(k, d=null){ try{ const v = localStorage.getItem(k); return v === null ? d : v; }catch{ return d; } },
-  set(k, v){ try{ localStorage.setItem(k, v); }catch{} }
+  set(k, v){ try{ localStorage.setItem(k, v); }catch{} },
+  json(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } }
 };
 let toastTimer;
 function toast(msg){
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
+// Enregistre un fichier : partage (Fichiers, Drive, mail…) si demandé et possible, sinon téléchargement
+async function saveFile(blob, name, share=false){
+  if(share && navigator.canShare){
+    const f = new File([blob], name, {type: blob.type || 'application/octet-stream'});
+    if(navigator.canShare({files:[f]})){
+      try{ await navigator.share({files:[f], title:name}); return; }catch(e){ if(e.name === 'AbortError') return; }
+    }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+const canShareFiles = () => { try{ return !!navigator.canShare && navigator.canShare({files:[new File(['x'],'x.stl',{type:'model/stl'})]}); }catch{ return false; } };
+
+/*PURE-START — code sans DOM (testable hors navigateur) */
+/* =========================================================
+   3a. QR CODE (mode octet, niveaux L/M, versions 1 à 10)
+   ========================================================= */
+const QR = (() => {
+  const ECC = {L:{bits:1, cw:[7,10,15,20,26,18,20,24,30,18], bl:[1,1,1,1,1,2,2,2,2,4]},
+               M:{bits:0, cw:[10,16,26,18,24,16,18,22,22,26], bl:[1,1,1,2,2,4,4,4,5,5]}};
+  const mul = (x,y) => { let z = 0; for(let i=7;i>=0;i--){ z = (z<<1) ^ ((z>>>7)*0x11D); z ^= ((y>>>i)&1)*x; } return z; };
+  const rawModules = v => { let r = (16*v+128)*v+64; if(v>=2){ const n = Math.floor(v/7)+2; r -= (25*n-10)*n-55; if(v>=7) r -= 36; } return r; };
+  const rsDivisor = d => { const r = new Array(d-1).fill(0); r.push(1); let root = 1;
+    for(let i=0;i<d;i++){ for(let j=0;j<r.length;j++){ r[j] = mul(r[j],root); if(j+1<r.length) r[j] ^= r[j+1]; } root = mul(root,2); }
+    return r; };
+  const rsRem = (data, div) => { const r = div.map(() => 0);
+    for(const b of data){ const f = b ^ r.shift(); r.push(0); div.forEach((c,i) => r[i] ^= mul(c,f)); }
+    return r; };
+  const MASKS = [(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,
+    (x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+
+  function encode(text, level='L'){
+    const bytes = [...new TextEncoder().encode(text)], E = ECC[level];
+    let v = 1, cap = 0;
+    for(; v<=10; v++){ cap = Math.floor(rawModules(v)/8) - E.cw[v-1]*E.bl[v-1]; if(4 + (v<10?8:16) + 8*bytes.length <= cap*8) break; }
+    if(v > 10) throw new Error('Texte trop long pour le QR code');
+    // Flux de bits
+    const bits = [], put = (val,len) => { for(let i=len-1;i>=0;i--) bits.push((val>>>i)&1); };
+    put(4,4); put(bytes.length, v<10?8:16); bytes.forEach(b => put(b,8));
+    const capBits = cap*8; put(0, Math.min(4, capBits-bits.length)); put(0, (8-bits.length%8)%8);
+    for(let pad=0xEC; bits.length<capBits; pad ^= 0xEC^0x11) put(pad,8);
+    const data = []; for(let i=0;i<bits.length;i+=8){ let b = 0; for(let j=0;j<8;j++) b = (b<<1)|bits[i+j]; data.push(b); }
+    // Correction d'erreurs + entrelacement
+    const nb = E.bl[v-1], el = E.cw[v-1], raw = Math.floor(rawModules(v)/8), nShort = nb - raw%nb, shortLen = Math.floor(raw/nb);
+    const div = rsDivisor(el), blocks = [];
+    for(let i=0,k=0;i<nb;i++){ const dat = data.slice(k, k+shortLen-el+(i<nShort?0:1)); k += dat.length;
+      const ecc = rsRem(dat, div); if(i<nShort) dat.push(0); blocks.push(dat.concat(ecc)); }
+    const cw = []; for(let i=0;i<blocks[0].length;i++) blocks.forEach((b,j) => { if(i !== shortLen-el || j >= nShort) cw.push(b[i]); });
+    // Matrice et motifs fixes
+    const size = v*4+17, M = [...Array(size)].map(() => Array(size).fill(false)), F = [...Array(size)].map(() => Array(size).fill(false));
+    const set = (x,y,d) => { M[y][x] = d; F[y][x] = true; };
+    for(let i=0;i<size;i++){ set(6,i,i%2===0); set(i,6,i%2===0); }
+    const finder = (x,y) => { for(let dy=-4;dy<=4;dy++) for(let dx=-4;dx<=4;dx++){ const d = Math.max(Math.abs(dx),Math.abs(dy)), xx = x+dx, yy = y+dy;
+      if(xx>=0 && xx<size && yy>=0 && yy<size) set(xx,yy,d!==2 && d!==4); } };
+    finder(3,3); finder(size-4,3); finder(3,size-4);
+    if(v > 1){ const n = Math.floor(v/7)+2, step = Math.ceil((v*4+4)/(n*2-2))*2, pos = [6];
+      for(let p=size-7; pos.length<n; p-=step) pos.splice(1,0,p);
+      for(let i=0;i<n;i++) for(let j=0;j<n;j++){ if((i===0&&j===0)||(i===0&&j===n-1)||(i===n-1&&j===0)) continue;
+        for(let dy=-2;dy<=2;dy++) for(let dx=-2;dx<=2;dx++) set(pos[i]+dx, pos[j]+dy, Math.max(Math.abs(dx),Math.abs(dy))!==1); } }
+    const format = mask => { const d = (E.bits<<3)|mask; let r = d; for(let i=0;i<10;i++) r = (r<<1)^((r>>>9)*0x537);
+      const b = ((d<<10)|r)^0x5412, g = i => ((b>>>i)&1) === 1;
+      for(let i=0;i<=5;i++) set(8,i,g(i)); set(8,7,g(6)); set(8,8,g(7)); set(7,8,g(8)); for(let i=9;i<15;i++) set(14-i,8,g(i));
+      for(let i=0;i<8;i++) set(size-1-i,8,g(i)); for(let i=8;i<15;i++) set(8,size-15+i,g(i)); set(8,size-8,true); };
+    format(0);
+    if(v >= 7){ let r = v; for(let i=0;i<12;i++) r = (r<<1)^((r>>>11)*0x1F25); const b = (v<<12)|r;
+      for(let i=0;i<18;i++){ const bit = ((b>>>i)&1) === 1, a = size-11+i%3, c = Math.floor(i/3); set(a,c,bit); set(c,a,bit); } }
+    // Placement des données en zigzag
+    let i = 0;
+    for(let right=size-1; right>=1; right-=2){ if(right === 6) right = 5;
+      for(let vert=0; vert<size; vert++) for(let j=0;j<2;j++){ const x = right-j, up = ((right+1)&2) === 0, y = up ? size-1-vert : vert;
+        if(!F[y][x] && i < cw.length*8){ M[y][x] = ((cw[i>>>3]>>>(7-(i&7)))&1) === 1; i++; } } }
+    // Choix du masque (pénalités simplifiées)
+    const apply = m => { for(let y=0;y<size;y++) for(let x=0;x<size;x++) if(!F[y][x] && MASKS[m](x,y)) M[y][x] = !M[y][x]; };
+    const penalty = () => { let p = 0, dark = 0;
+      for(let a=0;a<size;a++) for(const horiz of [true,false]){ let run = 1;
+        for(let b=1;b<size;b++){ const c = horiz ? M[a][b] : M[b][a], prev = horiz ? M[a][b-1] : M[b-1][a];
+          if(c === prev){ run++; if(run === 5) p += 3; else if(run > 5) p++; } else run = 1; } }
+      for(let y=0;y<size-1;y++) for(let x=0;x<size-1;x++){ const c = M[y][x]; if(c===M[y][x+1] && c===M[y+1][x] && c===M[y+1][x+1]) p += 3; }
+      for(const row of M) for(const c of row) if(c) dark++;
+      return p + Math.floor(Math.abs(dark*20 - size*size*10)/(size*size))*10; };
+    let best = 0, bestP = Infinity;
+    for(let m=0;m<8;m++){ apply(m); format(m); const p = penalty(); if(p < bestP){ bestP = p; best = m; } apply(m); }
+    apply(best); format(best);
+    return {size, version:v, modules:M};
+  }
+  return {encode};
+})();
 
 /* =========================================================
-   3. STOCKAGE (IndexedDB, repli en mémoire)
+   3b. MAILLAGES 3D (STL)
+   ========================================================= */
+const Mesh = {
+  // Révolution d'un profil fermé (r,z) parcouru dans le sens anti-horaire. o:true = paroi extérieure, déformée par mod(θ,z,r)
+  revolve(profile, N, mod){
+    const tris = [], n = profile.length;
+    const rings = profile.map(p => { const ring = [];
+      for(let i=0;i<N;i++){ const th = 2*Math.PI*i/N, r = p.r === 0 ? 0 : p.r + (p.o && mod ? mod(th, p.z, p.r) : 0);
+        ring.push([r*Math.cos(th), r*Math.sin(th), p.z]); }
+      return ring; });
+    for(let j=0;j<n;j++){ const A = rings[j], B = rings[(j+1)%n], a0 = profile[j].r === 0, b0 = profile[(j+1)%n].r === 0;
+      if(a0 && b0) continue;
+      for(let i=0;i<N;i++){ const k = (i+1)%N;
+        if(!a0) tris.push([A[i], A[k], B[i]]);
+        if(!b0) tris.push([A[k], B[k], B[i]]); } }
+    return tris;
+  },
+  // Extrusion d'un polygone convexe (sens anti-horaire, vu de dessus)
+  prism(poly, z0, z1, tris=[]){
+    const n = poly.length, P = (p,z) => [p[0],p[1],z];
+    for(let i=1;i<n-1;i++){ tris.push([P(poly[0],z1), P(poly[i],z1), P(poly[i+1],z1)]); tris.push([P(poly[0],z0), P(poly[i+1],z0), P(poly[i],z0)]); }
+    for(let i=0;i<n;i++){ const a = poly[i], b = poly[(i+1)%n];
+      tris.push([P(a,z0), P(b,z0), P(b,z1)]); tris.push([P(a,z0), P(b,z1), P(a,z1)]); }
+    return tris;
+  },
+  box(x0,y0,z0,x1,y1,z1,tris=[]){ return Mesh.prism([[x0,y0],[x1,y0],[x1,y1],[x0,y1]], z0, z1, tris); },
+  roundRect(x0,y0,x1,y1,r,seg=6){
+    const pts = [], C = [[x1-r,y0+r,-90],[x1-r,y1-r,0],[x0+r,y1-r,90],[x0+r,y0+r,180]];
+    for(const [cx,cy,a0] of C) for(let s=0;s<=seg;s++){ const a = (a0 + 90*s/seg)*Math.PI/180; pts.push([cx + r*Math.cos(a), cy + r*Math.sin(a)]); }
+    return pts;
+  },
+  volume(tris){ let v = 0;
+    for(const [a,b,c] of tris) v += a[0]*(b[1]*c[2]-b[2]*c[1]) - a[1]*(b[0]*c[2]-b[2]*c[0]) + a[2]*(b[0]*c[1]-b[1]*c[0]);
+    return v/6; },
+  bounds(tris){ const mn = [Infinity,Infinity,Infinity], mx = [-Infinity,-Infinity,-Infinity];
+    for(const t of tris) for(const p of t) for(let i=0;i<3;i++){ if(p[i]<mn[i]) mn[i]=p[i]; if(p[i]>mx[i]) mx[i]=p[i]; }
+    return {mn, mx, size:[mx[0]-mn[0], mx[1]-mn[1], mx[2]-mn[2]]}; },
+  stl(tris, name='verdure'){
+    const buf = new ArrayBuffer(84 + 50*tris.length), dv = new DataView(buf);
+    const head = ('Verdure ' + name).slice(0,79); for(let i=0;i<head.length;i++) dv.setUint8(i, head.charCodeAt(i) & 0x7f);
+    dv.setUint32(80, tris.length, true); let o = 84;
+    for(const [a,b,c] of tris){
+      const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+      let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const l = Math.hypot(nx,ny,nz) || 1; nx/=l; ny/=l; nz/=l;
+      for(const f of [nx,ny,nz,...a,...b,...c]){ dv.setFloat32(o, f, true); o += 4; }
+      dv.setUint16(o, 0, true); o += 2; }
+    return buf;
+  }
+};
+
+/* =========================================================
+   3c. GÉNÉRATEURS : pot, soucoupe, auto-arrosant, tuteur
+   Unités : mm. o = {type, D, H, wall, taper, hole, pattern, amp, ribs, twist}
+   ========================================================= */
+function potMod(o){
+  const k = Math.max(3, Math.round(o.ribs)), A = o.amp, tw = z => 2*Math.PI*(o.twist||0)*z/o.H, wave = x => 0.5 + 0.5*Math.cos(x);
+  const facet = (th, r) => { const s = 2*Math.PI/k, a = ((th % s) + s) % s - s/2; return r*(1/Math.cos(a) - 1); };
+  switch(o.pattern){
+    case 'ribs': return th => A*wave(k*th);
+    case 'twist': return (th,z) => A*wave(k*(th + tw(z)));
+    case 'waves': return (th,z) => A*wave(2*Math.PI*Math.max(2, Math.round(k/3))*z/o.H);
+    case 'diamond': return (th,z) => { const t = 2*Math.PI*Math.max(2, Math.round(k/3))*z/o.H; return A*Math.max(wave(k*th + t), wave(k*th - t)); };
+    case 'facets': return (th,z,r) => facet(th, r);
+    case 'twistfacets': return (th,z,r) => facet(th + tw(z), r);
+    default: return null;
+  }
+}
+function potAmp(o, R){ if(o.pattern === 'smooth') return 0; if(o.pattern.includes('facets')) return R*(1/Math.cos(Math.PI/Math.max(3,o.ribs)) - 1); return o.amp; }
+// Profil d'un pot (évasé), avec trou central optionnel et collerette optionnelle
+function potProfile({Ri, H, wall, bottom, taper, holeR, nz, lip, patterned=true}){
+  const s = z => 1 - taper*(1 - z/H), top = lip ? H - lip.t : H, pts = [{r:holeR, z:0}];
+  for(let k=0;k<=nz;k++){ const z = top*k/nz; pts.push({r:(Ri+wall)*s(z), z, o:patterned && !lip}); }
+  if(lip) pts.push({r:lip.R, z:H-lip.t}, {r:lip.R, z:H});
+  pts.push({r:Ri*s(H), z:H}, {r:Ri*s(bottom), z:bottom}, {r:holeR, z:bottom});
+  return pts;
+}
+function designPot(o, N=128, nz=60){
+  const Ri = o.D/2, w = o.wall, bottom = 2, taper = o.taper, holeR = o.hole/2, mod = potMod(o);
+  const k = Math.max(3, Math.round(o.ribs)), Nf = o.pattern.includes('facets') ? k*Math.ceil(N/k) : N;
+  const s = z => 1 - taper*(1 - z/o.H), parts = [];
+  if(o.type === 'self'){
+    const lipT = 3, under = o.H - lipT, Rr = (Ri+w)*s(under) + 1.5, wd = clamp(o.H*0.3, 20, 45), br = 2, Hr = br + wd + under;
+    const lipR = Rr + w + 1.5;
+    parts.push({name:'pot-interieur', tris:Mesh.revolve(potProfile({Ri, H:o.H, wall:w, bottom, taper, holeR:Math.max(holeR,5), nz:Math.min(nz,8), lip:{t:lipT, R:lipR}}), N, null)});
+    parts.push({name:'reservoir', tris:Mesh.revolve(potProfile({Ri:Rr, H:Hr, wall:w, bottom:br, taper:0, holeR:0, nz}), Nf, mod),
+      water:Math.PI*Rr*Rr*wd/1000, gap:wd});
+  } else {
+    const hole = o.type === 'cache' ? 0 : holeR;
+    parts.push({name:o.type === 'cache' ? 'cache-pot' : 'pot', tris:Mesh.revolve(potProfile({Ri, H:o.H, wall:w, bottom, taper, holeR:hole, nz}), Nf, mod)});
+    if(o.type === 'saucer'){
+      const Rb = Math.max((Ri+w)*(1-taper) + potAmp(o, (Ri+w)*(1-taper)) + 2.5, (Ri+w)*(1-taper*0.3) + potAmp(o, Ri+w)), fl = 1.6;
+      const tris = Mesh.revolve(potProfile({Ri:Rb, H:15, wall:2, bottom:fl, taper:0, holeR:0, nz:3, patterned:false}), N, null);
+      // 6 barrettes : le pot ne trempe pas, l'eau circule entre elles
+      for(let i=0;i<6;i++){ const a = i*Math.PI/3, c = Math.cos(a), si = Math.sin(a), r1 = Math.max(hole+4, Rb*0.3), r2 = Rb-1;
+        Mesh.prism([[r1,-1.5],[r2,-1.5],[r2,1.5],[r1,1.5]].map(([x,y]) => [x*c - y*si, x*si + y*c]), fl-0.1, fl+3, tris); }
+      parts.push({name:'soucoupe', tris});
+    }
+  }
+  for(const p of parts){ p.bounds = Mesh.bounds(p.tris); p.volume = Mesh.volume(p.tris); }
+  return parts;
+}
+// Tuteur : plaque + pique (base) et QR + texte en relief. textRuns en mm depuis le coin haut-gauche de la zone de texte
+function designStake({matrix, qrW, textRuns=[], textW=0, textH=0, thick=2.4, relief=0.8}){
+  const size = matrix.size, mod = qrW/size, m = Math.max(4, 2*mod + 1.2), W = qrW + 2*m, gap = 2.5;
+  const H = m + qrW + (textH ? gap + textH : 0) + m*0.8, base = [], rel = [], z0 = thick, z1 = thick + relief;
+  Mesh.prism(Mesh.roundRect(-W/2, 0, W/2, H, 3), 0, thick, base);
+  Mesh.prism([[-4,2],[-4,-58],[0,-75],[4,-58],[4,2]], 0, thick, base);
+  const qx = -qrW/2, qy = H - m;
+  matrix.modules.forEach((row, r) => { let x = 0;
+    while(x < size){ if(row[x]){ let x2 = x; while(x2 < size && row[x2]) x2++; Mesh.box(qx + x*mod, qy - (r+1)*mod, z0, qx + x2*mod, qy - r*mod, z1, rel); x = x2; } else x++; } });
+  const tx = -textW/2, ty = qy - qrW - gap;
+  for(const t of textRuns) Mesh.box(tx + t.x0, ty - t.y1, z0, tx + t.x1, ty - t.y0, z1, rel);
+  return {base, relief:rel, W, H, m, mod, qx, qy, tx, ty, total:H+75, thick, z1};
+}
+/*PURE-END*/
+
+/* =========================================================
+   4. STOCKAGE (IndexedDB, repli en mémoire)
    ========================================================= */
 const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 const DB = {
-  db:null, mem:new Map(),
+  db:null, mem:{plants:new Map(), photos:new Map(), cuttings:new Map()},
   async open(){
     try{
       this.db = await new Promise((res, rej) => {
-        const r = indexedDB.open('verdure', 1);
-        r.onupgradeneeded = () => r.result.createObjectStore('plants', {keyPath:'id'});
+        const r = indexedDB.open('verdure', 2);
+        r.onupgradeneeded = () => { const db = r.result;
+          if(!db.objectStoreNames.contains('plants')) db.createObjectStore('plants', {keyPath:'id'});
+          if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', {keyPath:'id'}).createIndex('plant', 'plantId');
+          if(!db.objectStoreNames.contains('cuttings')) db.createObjectStore('cuttings', {keyPath:'id'}); };
         r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
       });
-    }catch{ this.db = null; toast('Stockage indisponible : les plantes ne seront pas sauvegardées.'); }
+    }catch{ this.db = null; toast('Stockage indisponible : rien ne sera sauvegardé.'); }
   },
-  store(mode){ return this.db.transaction('plants', mode).objectStore('plants'); },
-  async all(){ return this.db ? req(this.store('readonly').getAll()) : [...this.mem.values()]; },
-  async put(p){ if(this.db) await req(this.store('readwrite').put(p)); else this.mem.set(p.id, p); },
-  async del(id){ if(this.db) await req(this.store('readwrite').delete(id)); else this.mem.delete(id); },
-  async clear(){ if(this.db) await req(this.store('readwrite').clear()); else this.mem.clear(); }
+  store(name, mode){ return this.db.transaction(name, mode).objectStore(name); },
+  async all(s){ return this.db ? req(this.store(s,'readonly').getAll()) : [...this.mem[s].values()]; },
+  async put(s, o){ if(this.db) await req(this.store(s,'readwrite').put(o)); else this.mem[s].set(o.id, o); },
+  async del(s, id){ if(this.db) await req(this.store(s,'readwrite').delete(id)); else this.mem[s].delete(id); },
+  async clear(s){ if(this.db) await req(this.store(s,'readwrite').clear()); else this.mem[s].clear(); },
+  async photosOf(plantId){
+    const list = this.db ? await req(this.store('photos','readonly').index('plant').getAll(plantId)) : [...this.mem.photos.values()].filter(p => p.plantId === plantId);
+    return list.sort((a,b) => a.date - b.date);
+  }
 };
-let PLANTS = [];
+let PLANTS = [], CUTTINGS = [];
 async function reload(){
-  PLANTS = await DB.all();
-  PLANTS.sort((a,b) => (a.added||0) - (b.added||0));
-  renderPlants(); renderWater();
+  PLANTS = (await DB.all('plants')).sort((a,b) => (a.added||0) - (b.added||0));
+  CUTTINGS = (await DB.all('cuttings')).sort((a,b) => (b.started||0) - (a.started||0));
+  renderPlants(); renderCuttings(); renderWater(); renderRooms(); refreshPlantSelects();
 }
 
 /* =========================================================
-   4. IMAGES
+   5. IMAGES
    ========================================================= */
 function loadImage(file){
   return new Promise((res, rej) => {
@@ -430,7 +845,61 @@ async function resize(file, max, q){
 }
 
 /* =========================================================
-   5. ENTRETIEN & POTS
+   6. PIÈCES & LUMIÈRE
+   ========================================================= */
+const getRooms = () => ls.json('verdure.rooms', []);
+const setRooms = r => ls.set('verdure.rooms', JSON.stringify(r));
+const roomOf = p => getRooms().find(r => r.name.trim().toLowerCase() === (p.room||'').trim().toLowerCase());
+const ORIENT = {S:['Sud',4], SX:['Sud-Est / Sud-Ouest',4], EO:['Est / Ouest',3], N:['Nord',2], V:['Fenêtre de toit (Velux)',4]};
+const DIST = ['Moins de 1 m','1 à 2 m','2 à 3 m','Plus de 3 m'];
+const OBST = ['Rien','Voilage ou store','Arbre ou immeuble en face'];
+function estimateLight(o, d, x){
+  let pen = Number(d); if(o === 'V') pen = Math.ceil(pen/2); // la lumière du toit porte plus loin
+  return clamp(ORIENT[o][1] - pen - (Number(x) > 0 ? 1 : 0), 0, 4);
+}
+function lightFit(need, lvl){
+  const n = LVL[need] ?? 2;
+  if(need === 'tolerante') return {cls:'ok', msg:'Lumière adaptée'};
+  if(lvl >= n){ if(lvl === 4 && n <= 1) return {cls:'due', msg:'Trop de soleil direct : risque de brûlure des feuilles'}; return {cls:'ok', msg:'Lumière adaptée'}; }
+  if(lvl === n-1) return {cls:'soon', msg:'Lumière un peu juste : rapproche-la de la fenêtre'};
+  return {cls:'late', msg:'Trop sombre pour elle : elle va s’étioler'};
+}
+
+/* =========================================================
+   7. MÉTÉO (Open-Meteo)
+   ========================================================= */
+let WX = null;
+const wxPos = () => ({lat:Number(ls.get('verdure.lat', '48.5734')), lon:Number(ls.get('verdure.lon', '7.7521'))});
+const localISO = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+async function loadWeather(force=false){
+  const cache = ls.json('verdure.wx', null), {lat, lon} = wxPos();
+  if(!force && cache && Date.now() - cache.t < 3*3600000 && cache.lat === lat && cache.lon === lon){ WX = cache.d; return; }
+  try{
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&past_days=2&forecast_days=4`);
+    if(!r.ok) throw 0;
+    WX = (await r.json()).daily; ls.set('verdure.wx', JSON.stringify({t:Date.now(), lat, lon, d:WX}));
+  }catch{ if(cache) WX = cache.d; }
+  renderWater(); renderPlants();
+}
+function wxDays(){ // index d'aujourd'hui dans les données
+  if(!WX || !WX.time) return null; const i = WX.time.indexOf(localISO(Date.now())); return i < 0 ? null : i;
+}
+function wxHot(){ const i = wxDays(); if(i === null) return null; return Math.max(...WX.temperature_2m_max.slice(i, i+3).filter(v => v != null)); }
+function wxCold(){ const i = wxDays(); if(i === null) return null; return Math.min(...WX.temperature_2m_min.slice(i, i+2).filter(v => v != null)); }
+function wxRain(){ // date et quantité de la dernière grosse pluie (≥ 8 mm) sur hier/aujourd'hui
+  const i = wxDays(); if(i === null) return null;
+  for(let k=i; k>=Math.max(0,i-1); k--){ const mm = WX.precipitation_sum[k]; if(mm >= 8){ const [y,m,d] = WX.time[k].split('-').map(Number); return {t:Math.min(Date.now(), new Date(y,m-1,d,12).getTime()), mm}; } }
+  return null;
+}
+function wxFactor(p){
+  if(isWinter()) return 1; const hot = wxHot(); if(hot === null) return 1;
+  if(p.outdoor) return hot >= 30 ? 0.6 : hot >= 26 ? 0.8 : 1;
+  return hot >= 30 ? 0.85 : 1;
+}
+const minTemp = p => MIN_TEMP[(p.genus||'').toLowerCase()] ?? MIN_TEMP_FAMILY[(p.family||'').toLowerCase()] ?? 10;
+
+/* =========================================================
+   8. FICHES D'ENTRETIEN & POTS
    ========================================================= */
 function getCare(genus, family){
   let row = CARE[(genus||'').toLowerCase()], src = 'genre';
@@ -439,12 +908,14 @@ function getCare(genus, family){
   const [name, light, water, hum, tip, pot, tox] = row;
   return {name, light, water, hum, tip, pot, tox, src};
 }
-function careHTML(c){
+function careHTML(c, plant){
   const src = c.src === 'genre' ? 'fiche du genre' : c.src === 'famille' ? 'fiche de la famille' : 'conseils généraux';
   const tox = c.tox === 1 ? '⚠️ Toxique pour chats et chiens : hors de portée' : c.tox === 0 ? '✅ Réputée sans danger' : '❔ Inconnu, prudence';
+  const room = plant && roomOf(plant), fit = room ? lightFit(c.light, room.level) : null;
   return `<div class="card"><h3>🪴 Entretien <span class="small muted">(${src})</span></h3>
+    ${fit && fit.cls !== 'ok' ? `<p class="warn">☀️ ${esc(room.name)} (${ROOM_LVL[room.level]}) : ${fit.msg}</p>` : ''}
     <ul class="facts">
-      <li><b>Lumière</b><span>${LIGHT[c.light]}</span></li>
+      <li><b>Lumière</b><span>${LIGHT[c.light]}${fit && fit.cls === 'ok' ? ` <span class="pill ok">✓ ${esc(room.name)}</span>` : ''}</span></li>
       <li><b>Arrosage</b><span>~ tous les ${c.water} j en saison, ~ ${Math.round(c.water*1.5)} j en hiver</span></li>
       <li><b>Humidité</b><span>${esc(c.hum)}</span></li>
       <li><b>Animaux</b><span>${tox}</span></li>
@@ -452,34 +923,27 @@ function careHTML(c){
     ${c.tip ? `<p class="tip">💡 ${esc(c.tip)}</p>` : ''}
     <p class="small muted">Vérifie toujours la terre au doigt avant d’arroser.</p></div>`;
 }
-function potHTML(c, diam){
-  const p = POTS[c.pot] || POTS.standard, q = encodeURIComponent(p.q);
-  const d = Number(diam) || 0;
+function potHTML(c, plant, genus){
+  const p = POTS[c.pot] || POTS.standard, q = encodeURIComponent(p.q), d = Number(plant?.diam) || 0;
   const size = d ? `Prochain pot : <b>${d+2} à ${d+4} cm</b> de diamètre intérieur (pot actuel ${d} cm).`
-                 : `Taille : 2 à 4 cm de plus que la motte actuelle (indique le diamètre du pot dans la fiche de la plante).`;
-  const big = d && d + 4 > PRINTER_MAX
-    ? `<p class="warn">Au-delà de ${PRINTER_MAX} cm, ça ne tient pas sur le plateau 25 × 25 cm de la Kobra 3 : cherche un modèle en plusieurs parties.</p>` : '';
-  return `<div class="card"><h3>🖨️ Pot à imprimer : ${esc(p.t)}</h3>
-    <p>${esc(p.d)}</p><p class="small">${size}</p>${big}
+                 : `Taille : 2 à 4 cm de plus que la motte actuelle.`;
+  const attr = plant ? `data-id="${plant.id}"` : `data-g="${esc(genus||'')}"`;
+  return `<div class="card"><h3>🖨️ Pot conseillé : ${esc(p.t)}</h3>
+    <p>${esc(p.d)}</p><p class="small">${size}</p>
     <div class="row" style="margin:8px 0">
-      <a class="btn sm" href="https://www.printables.com/search/models?q=${q}" target="_blank" rel="noopener">Printables</a>
-      <a class="btn sm ghost" href="https://makerworld.com/en/search/models?keyword=${q}" target="_blank" rel="noopener">MakerWorld</a>
+      <button class="btn" data-action="gen-pot" ${attr}>🏺 Générer ce pot</button>
+      ${plant ? `<button class="btn ghost" data-action="gen-stake" data-id="${plant.id}">🏷️ Tuteur QR</button>` : ''}
     </div>
-    <details><summary>Conseils d’impression</summary><ul class="small">
-      <li><b>PETG</b> pour tout ce qui touche l’eau ; ASA pour l’extérieur (UV). Le PLA, seulement en cache-pot.</li>
-      <li>Étanchéité : 4 périmètres et fond d’au moins 1,2 mm. Un cache-pot sans trou s’imprime très bien en mode vase.</li>
-      <li>Avec l’ACE Pro : cache-pot multicolore, pot intérieur en PETG d’une seule couleur.</li>
-      <li>Plateau Kobra 3 : 25 × 25 cm, donc ${PRINTER_MAX} cm de diamètre max en une pièce.</li>
-    </ul></details></div>`;
+    <p class="small muted">Ou cherche un modèle : <a href="https://www.printables.com/search/models?q=${q}" target="_blank" rel="noopener">Printables</a> · <a href="https://makerworld.com/en/search/models?keyword=${q}" target="_blank" rel="noopener">MakerWorld</a></p></div>`;
 }
 
 /* =========================================================
-   6. API PL@NTNET
+   9. API PL@NTNET
    ========================================================= */
 const getKey = () => ls.get('verdure.key', '').trim();
 function showQuota(){
   const q = ls.get('verdure.quota');
-  $('#quota').textContent = q !== null ? `${q} analyses restantes aujourd’hui` : '';
+  $('#quota').textContent = q !== null ? `${q} analyses restantes` : '';
 }
 async function plantnet(path, photos){
   const key = getKey();
@@ -490,23 +954,22 @@ async function plantnet(path, photos){
   const url = `https://my-api.plantnet.org${path}${sep}api-key=${encodeURIComponent(key)}&lang=fr&include-related-images=true`;
   let r;
   try{ r = await fetch(url, {method:'POST', body:fd}); }
-  catch{ throw new Error('Connexion à PlantNet impossible. Vérifie ton réseau et que le domaine de l’app est autorisé pour ta clé sur my.plantnet.org.'); }
+  catch{ throw new Error('Connexion à PlantNet impossible. Vérifie ton réseau, et que l’adresse de l’app (avec https://) est dans les domaines autorisés de ta clé.'); }
   let data = null; try{ data = await r.json(); }catch{}
   if(data && data.remainingIdentificationRequests != null){ ls.set('verdure.quota', data.remainingIdentificationRequests); showQuota(); }
   if(!r.ok){
-    const msg = {400:'Requête refusée (photo ou type d’organe invalide).',401:'Clé API invalide.',403:'Clé refusée pour ce domaine : autorise-le sur my.plantnet.org.',404:'Rien de reconnu. Essaie une photo plus nette, de près, d’une feuille ou d’une fleur.',413:'Image trop lourde.',429:'Quota du jour épuisé.'}[r.status];
-    throw new Error(msg || `Erreur PlantNet (${r.status}).`);
+    const msg = {400:'Requête refusée (photo ou type d’organe invalide).',401:'Clé API invalide.',403:'Clé refusée pour ce domaine : ajoute l’adresse complète de l’app (avec https://) sur my.plantnet.org.',404:'Rien de reconnu. Essaie une photo plus nette, de près, d’une feuille ou d’une fleur.',413:'Image trop lourde.',429:'Quota du jour épuisé.'}[r.status];
+    const detail = data && (data.message || data.error) ? ` (PlantNet : ${data.message || data.error})` : '';
+    throw new Error((msg || `Erreur PlantNet (${r.status}).`) + detail);
   }
   return data;
 }
 
 /* =========================================================
-   7. SCANNER
+   10. SCANNER
    ========================================================= */
-let MODE = 'identify', SHOTS = [], LAST = [], DIAG_PLANT = null;
-const ORGANS = {identify:[['auto','Auto'],['leaf','Feuille'],['flower','Fleur'],['fruit','Fruit'],['bark','Écorce']],
-                diagnose:[['auto','Auto'],['leaf','Feuille'],['flower','Fleur'],['fruit','Fruit'],['bark','Tige / écorce']]};
-
+let MODE = 'identify', SHOTS = [], LAST = [], DIAG_PLANT = null, LAST_DISEASE = null;
+const ORGANS = [['auto','Auto'],['leaf','Feuille'],['flower','Fleur'],['fruit','Fruit'],['bark','Tige / écorce']];
 function setMode(m){
   MODE = m;
   document.querySelectorAll('[data-action="mode"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
@@ -531,12 +994,12 @@ async function addShots(files){
 }
 function renderShots(){
   const box = $('#shots');
-  if(!SHOTS.length){ box.innerHTML = `<div class="empty" style="grid-column:1/-1">Aucune photo pour l’instant</div>`; }
+  if(!SHOTS.length) box.innerHTML = `<div class="empty" style="grid-column:1/-1">Aucune photo pour l’instant</div>`;
   else box.innerHTML = SHOTS.map((s,i) => `<div class="shot">
       <img src="${s.preview}" alt="Photo ${i+1}">
       <button class="x" data-action="rm-shot" data-i="${i}" aria-label="Retirer la photo ${i+1}">✕</button>
       <select data-i="${i}" class="organ" aria-label="Partie photographiée, photo ${i+1}">
-        ${ORGANS[MODE].map(([v,l]) => `<option value="${v}"${s.organ===v?' selected':''}>${l}</option>`).join('')}
+        ${ORGANS.map(([v,l]) => `<option value="${v}"${s.organ===v?' selected':''}>${l}</option>`).join('')}
       </select></div>`).join('');
   $('#btn-analyze').disabled = !SHOTS.length;
 }
@@ -545,13 +1008,8 @@ async function analyze(){
   btn.disabled = true; btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Analyse…';
   out.innerHTML = '';
   try{
-    if(MODE === 'identify'){
-      const data = await plantnet('/v2/identify/all?nb-results=6', SHOTS);
-      LAST = data.results || []; renderIdentify();
-    }else{
-      const data = await plantnet('/v2/diseases/identify', SHOTS);
-      renderDiseases(data.results || []);
-    }
+    if(MODE === 'identify'){ const data = await plantnet('/v2/identify/all?nb-results=6', SHOTS); LAST = data.results || []; renderIdentify(); }
+    else{ const data = await plantnet('/v2/diseases/identify', SHOTS); renderDiseases(data.results || []); }
   }catch(e){ out.innerHTML = `<p class="warn">${esc(e.message)}</p>`; }
   btn.textContent = label; btn.disabled = !SHOTS.length;
 }
@@ -579,6 +1037,7 @@ function renderIdentify(){
 function renderDiseases(list){
   const out = $('#scan-result');
   if(!list.length){ out.innerHTML = '<p class="warn">Aucun problème reconnu sur ces photos.</p>'; return; }
+  LAST_DISEASE = list[0];
   out.innerHTML = `<h2>Problèmes possibles</h2>
     <p class="note">Résultats indicatifs. Avant de traiter, vérifie d’abord les causes les plus fréquentes : excès d’arrosage, manque de lumière, air trop sec.</p>
     ${list.slice(0,6).map(r => { const pct = Math.round((r.score||0)*100);
@@ -590,7 +1049,6 @@ function renderDiseases(list){
         <span class="small muted">${pct} % de confiance</span>
         ${imgs.length ? `<div class="refs">${imgs.map(u => `<img src="${esc(u)}" alt="Image de référence" loading="lazy">`).join('')}</div>` : ''}</div>`; }).join('')}
     ${DIAG_PLANT ? `<button class="btn ghost block" data-action="diag-note">📝 Noter le diagnostic dans la fiche</button>` : ''}`;
-  renderDiseases.last = list[0];
 }
 function openSpecies(i){
   const s = sp(LAST[i]), c = getCare(s.genus, s.family);
@@ -599,65 +1057,96 @@ function openSpecies(i){
     ${s.commons.length > 1 ? `<p class="small muted">Aussi appelée : ${esc(s.commons.slice(1,4).join(', '))}</p>` : ''}
     ${s.imgs.length ? `<div class="refs">${s.imgs.map(u => `<img src="${esc(u)}" alt="Image de référence" loading="lazy">`).join('')}</div>` : ''}
     <button class="btn block" data-action="add-from-scan" data-i="${i}" style="margin:8px 0 14px">＋ Ajouter à mes plantes</button>
-    ${careHTML(c)}${potHTML(c)}`);
+    ${careHTML(c)}${potHTML(c, null, s.genus)}`);
+}
+function newPlant(fields){
+  return Object.assign({id:uid(), name:'Plante', sci:'', genus:'', family:'', photo:'', room:'', diam:null, interval:7,
+    outdoor:false, lastWatered:null, postpone:0, notes:'', added:Date.now(), lastPhoto:null}, fields);
 }
 async function addFromScan(i){
   const s = sp(LAST[i]), c = getCare(s.genus, s.family);
-  let photo = '';
-  try{ photo = (await resize(SHOTS[0].file, 600, .8)).dataURL; }catch{}
-  const p = {id:uid(), name:s.common || s.sci, sci:s.sci, genus:s.genus, family:s.family, photo,
-    room:'', diam:null, interval:c.water, lastWatered:null, postpone:0, notes:'', added:Date.now()};
-  await DB.put(p); await reload();
+  let photo = ''; try{ photo = (await resize(SHOTS[0].file, 600, .8)).dataURL; }catch{}
+  const p = newPlant({name:s.common || s.sci, sci:s.sci, genus:s.genus, family:s.family, photo, interval:c.water});
+  await DB.put('plants', p);
+  if(SHOTS[0]){ try{ const big = await resize(SHOTS[0].file, 1000, .8); await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big.dataURL}); p.lastPhoto = Date.now(); await DB.put('plants', p); }catch{} }
+  await reload();
   SHOTS = []; renderShots(); $('#scan-result').innerHTML = '';
   toast('Plante ajoutée 🌱'); showTab('plants'); openPlant(p.id);
 }
 
 /* =========================================================
-   8. COLLECTION
+   11. COLLECTION, FICHE PLANTE, JOURNAL PHOTO
    ========================================================= */
 function waterInfo(p){
-  const iv = Math.max(1, Math.round((Number(p.interval) || 7) * (isWinter() ? 1.5 : 1)));
-  if(!p.lastWatered) return {iv, days:0, label:'Date inconnue', cls:'due', next:null};
-  const next = p.lastWatered + (iv + (p.postpone||0)) * DAY;
+  const base = Number(p.interval) || 7, f = (isWinter() ? 1.5 : 1) * wxFactor(p);
+  const iv = Math.max(1, Math.round(base * f));
+  let last = p.lastWatered, rain = false;
+  const r = p.outdoor ? wxRain() : null;
+  if(r && (!last || r.t > last)){ last = r.t; rain = true; }
+  if(!last) return {iv, days:0, label:'Date inconnue', cls:'due', next:null, rain};
+  const next = last + (iv + (p.postpone||0)) * DAY;
   const days = Math.round((startOfDay(next) - startOfDay(Date.now())) / DAY);
-  if(days < 0) return {iv, days, next, cls:'late', label:`En retard de ${-days} j`};
-  if(days === 0) return {iv, days, next, cls:'due', label:'Aujourd’hui'};
-  if(days <= 2) return {iv, days, next, cls:'soon', label:`Dans ${days} j`};
-  return {iv, days, next, cls:'ok', label:`Dans ${days} j`};
+  const tag = rain ? ' 🌧️' : '';
+  if(days < 0) return {iv, days, next, rain, cls:'late', label:`En retard de ${-days} j${tag}`};
+  if(days === 0) return {iv, days, next, rain, cls:'due', label:`Aujourd’hui${tag}`};
+  if(days <= 2) return {iv, days, next, rain, cls:'soon', label:`Dans ${days} j${tag}`};
+  return {iv, days, next, rain, cls:'ok', label:`Dans ${days} j${tag}`};
 }
-const thumb = (p, cls='') => p.photo ? `<img src="${p.photo}" alt="" class="${cls}">` : `<span class="ph ${cls}" aria-hidden="true">🪴</span>`;
+const photoDue = p => Date.now() - (p.lastPhoto || p.added || Date.now()) > 30*DAY;
+const thumb = p => p.photo ? `<img src="${p.photo}" alt="">` : `<span class="ph" aria-hidden="true">🪴</span>`;
 
 function renderPlants(){
   const box = $('#plants');
   if(!PLANTS.length){ box.innerHTML = `<div class="empty">Aucune plante. Scanne-en une ou ajoute-la à la main.</div>`; return; }
-  box.innerHTML = `<div class="plants">${PLANTS.map(p => { const w = waterInfo(p); return `
+  box.innerHTML = `<div class="plants">${PLANTS.map(p => { const w = waterInfo(p), room = roomOf(p), fit = room ? lightFit(getCare(p.genus,p.family).light, room.level) : null; return `
     <button class="pcard" data-action="plant" data-id="${p.id}" aria-label="${esc(p.name)}, arrosage : ${w.label}">
       ${thumb(p)}<div class="body"><div class="name">${esc(p.name)}</div>
-      <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.room || p.sci || '')}</div>
-      <span class="pill ${w.cls}">💧 ${w.label}</span></div></button>`; }).join('')}</div>`;
+      <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.room || p.sci || '')}${p.outdoor ? ' · extérieur' : ''}</div>
+      <span class="pill ${w.cls}">💧 ${w.label}</span>
+      ${photoDue(p) ? '<span class="pill info">📸 photo du mois</span>' : ''}
+      ${fit && fit.cls !== 'ok' ? `<span class="pill ${fit.cls}">☀️ mal placée</span>` : ''}
+      </div></button>`; }).join('')}</div>`;
 }
-function openPlant(id){
+function roomDatalist(){ return `<datalist id="rooms-list">${getRooms().map(r => `<option value="${esc(r.name)}">`).join('')}</datalist>`; }
+
+async function openPlant(id){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  const c = getCare(p.genus, p.family), w = waterInfo(p);
+  const c = getCare(p.genus, p.family), w = waterInfo(p), photos = await DB.photosOf(id);
+  const first = photos[0], latest = photos[photos.length-1];
   openSheet(p.name, `
     ${p.photo ? `<img class="hero" src="${p.photo}" alt="${esc(p.name)}">` : ''}
     <p>${p.sci ? `<i>${esc(p.sci)}</i>` : ''}${p.family ? ` <span class="small muted">· ${esc(p.family)}</span>` : ''}</p>
     <div class="card"><h3>💧 Arrosage</h3>
       <p>Prochain : <span class="pill ${w.cls}">${w.label}</span>${p.lastWatered ? ` <span class="small muted">· dernier le ${fmtDate(p.lastWatered)}</span>` : ''}</p>
+      ${w.rain ? '<p class="small muted">🌧️ La pluie récente compte comme un arrosage.</p>' : ''}
       <div class="row"><button class="btn" data-action="water" data-id="${p.id}">💧 Arrosée</button>
       <button class="btn ghost" data-action="diagnose-plant" data-id="${p.id}">🩺 Diagnostic</button></div></div>
+
+    <div class="card"><h3>📸 Journal <span class="small muted">(${photos.length} photo${photos.length > 1 ? 's' : ''})</span></h3>
+      ${photoDue(p) ? '<p class="info-box">C’est le moment de la photo du mois : même angle, même endroit, pour bien voir l’évolution.</p>' : ''}
+      <label class="btn ghost block">📷 Ajouter une photo<input class="sr" type="file" accept="image/*" capture="environment" data-journal="${p.id}"></label>
+      ${photos.length ? `<div class="timeline">${photos.slice().reverse().map(ph => `<button data-action="photo" data-id="${ph.id}" data-plant="${p.id}"><img src="${ph.src}" alt="Photo du ${fmtDateY(ph.date)}"><span>${fmtDate(ph.date)}</span></button>`).join('')}</div>` : ''}
+      ${photos.length >= 2 ? `<div class="compare"><img src="${latest.src}" alt="Aujourd’hui"><img class="before" src="${first.src}" alt="Avant">
+        <span class="tag l">${fmtDateY(first.date)}</span><span class="tag r">${fmtDateY(latest.date)}</span></div>
+        <label class="field" style="margin-top:6px"><span class="sr">Comparer avant / après</span><input type="range" class="compare-range" min="0" max="100" value="50"></label>` : ''}
+    </div>
+
     <form class="card" data-id="${p.id}" id="plant-form"><h3>✏️ Ma plante</h3>
       <label class="field"><span>Nom</span><input name="name" value="${esc(p.name)}" required></label>
       <div class="grid2">
-        <label class="field"><span>Pièce / emplacement</span><input name="room" value="${esc(p.room)}" placeholder="Salon, grenier…"></label>
-        <label class="field"><span>Diamètre du pot (cm)</span><input name="diam" type="number" min="3" max="80" inputmode="numeric" value="${p.diam ?? ''}"></label>
-      </div>
-      <label class="field"><span>Arroser tous les … jours (en saison, ×1,5 auto en hiver)</span><input name="interval" type="number" min="1" max="60" inputmode="numeric" value="${p.interval}"></label>
+        <label class="field"><span>Pièce</span><input name="room" list="rooms-list" value="${esc(p.room)}" placeholder="Salon, grenier…"></label>
+        <label class="field"><span>Ø du pot (cm)</span><input name="diam" type="number" min="3" max="80" inputmode="numeric" value="${p.diam ?? ''}"></label>
+      </div>${roomDatalist()}
+      <label class="field"><span>Arroser tous les … jours (en saison ; ×1,5 auto en hiver)</span><input name="interval" type="number" min="1" max="60" inputmode="numeric" value="${p.interval}"></label>
+      <label class="check"><input type="checkbox" name="outdoor"${p.outdoor ? ' checked' : ''}> 🌤️ Plante d’extérieur (balcon, jardin) : alertes gel et pluie</label>
       <label class="field"><span>Notes</span><textarea name="notes">${esc(p.notes)}</textarea></label>
       <button class="btn block" type="submit">Enregistrer</button>
     </form>
-    ${careHTML(c)}${potHTML(c, p.diam)}
-    <button class="btn danger block" data-action="delete" data-id="${p.id}">Supprimer cette plante</button>`);
+    ${careHTML(c, p)}${potHTML(c, p)}
+    <div class="row">
+      <button class="btn ghost" data-action="cutting-from" data-id="${p.id}">✂️ Bouturer</button>
+      <button class="btn danger" data-action="delete" data-id="${p.id}">Supprimer</button>
+    </div>`);
 }
 async function savePlantForm(form){
   const p = PLANTS.find(x => x.id === form.dataset.id); if(!p) return;
@@ -665,98 +1154,499 @@ async function savePlantForm(form){
   p.name = f.get('name').trim() || p.name; p.room = f.get('room').trim();
   p.diam = f.get('diam') ? Number(f.get('diam')) : null;
   p.interval = Math.max(1, Number(f.get('interval')) || p.interval);
-  p.notes = f.get('notes');
-  await DB.put(p); await reload(); toast('Enregistré'); openPlant(p.id);
+  p.outdoor = f.get('outdoor') === 'on'; p.notes = f.get('notes');
+  await DB.put('plants', p); await reload(); toast('Enregistré'); openPlant(p.id);
+}
+async function addJournalPhoto(plantId, file){
+  const p = PLANTS.find(x => x.id === plantId); if(!p) return;
+  try{
+    const big = await resize(file, 1000, .8), small = await resize(file, 600, .8);
+    await DB.put('photos', {id:uid(), plantId, date:Date.now(), src:big.dataURL});
+    p.photo = small.dataURL; p.lastPhoto = Date.now(); await DB.put('plants', p);
+    await reload(); toast('Photo ajoutée au journal 📸'); openPlant(plantId);
+  }catch{ toast('Impossible de lire cette image'); }
+}
+async function openPhoto(photoId, plantId){
+  const ph = (await DB.photosOf(plantId)).find(x => x.id === photoId); if(!ph) return;
+  openSheet(fmtDateY(ph.date), `<img src="${ph.src}" alt="" style="width:100%;border-radius:12px;margin-bottom:12px">
+    <div class="row"><button class="btn ghost" data-action="plant" data-id="${plantId}">← Retour</button>
+    <button class="btn danger" data-action="photo-del" data-id="${photoId}" data-plant="${plantId}">Supprimer la photo</button></div>`);
 }
 function manualAdd(){
-  const opts = [...new Set(Object.keys(CARE))].sort().map(g => `<option value="${g}">${esc(CARE[g][0])}</option>`).join('');
   openSheet('Ajouter une plante', `<form id="manual-form" class="card">
     <label class="field"><span>Nom</span><input name="name" required placeholder="Ex. Monstera du salon"></label>
-    <label class="field"><span>Type de plante (pour l’entretien)</span>
-      <select name="genus"><option value="">Je ne sais pas</option>${opts}</select></label>
+    <label class="field"><span>Type de plante (pour l’entretien)</span><select name="genus">${genusOptions()}</select></label>
     <div class="grid2">
-      <label class="field"><span>Pièce</span><input name="room"></label>
-      <label class="field"><span>Pot (cm)</span><input name="diam" type="number" min="3" max="80" inputmode="numeric"></label>
-    </div>
+      <label class="field"><span>Pièce</span><input name="room" list="rooms-list"></label>
+      <label class="field"><span>Ø du pot (cm)</span><input name="diam" type="number" min="3" max="80" inputmode="numeric"></label>
+    </div>${roomDatalist()}
+    <label class="check"><input type="checkbox" name="outdoor"> 🌤️ Plante d’extérieur</label>
     <label class="field"><span>Photo (facultatif)</span><input name="photo" type="file" accept="image/*"></label>
     <button class="btn block" type="submit">Ajouter</button></form>`);
 }
+function genusOptions(sel=''){
+  const seen = new Set();
+  return '<option value="">Je ne sais pas</option>' + Object.keys(CARE).filter(g => { const r = CARE[g]; if(seen.has(r)) return false; seen.add(r); return true; })
+    .sort((a,b) => CARE[a][0].localeCompare(CARE[b][0], 'fr')).map(g => `<option value="${g}"${g===sel?' selected':''}>${esc(CARE[g][0])}</option>`).join('');
+}
 async function saveManual(form){
   const f = new FormData(form), genus = f.get('genus'), c = getCare(genus, '');
-  let photo = ''; const file = f.get('photo');
-  if(file && file.size){ try{ photo = (await resize(file, 600, .8)).dataURL; }catch{} }
-  const p = {id:uid(), name:f.get('name').trim(), sci:'', genus, family:'', photo, room:f.get('room').trim(),
-    diam:f.get('diam') ? Number(f.get('diam')) : null, interval:c.water, lastWatered:null, postpone:0, notes:'', added:Date.now()};
-  await DB.put(p); await reload(); toast('Plante ajoutée 🌱'); openPlant(p.id);
+  let photo = '', big = null; const file = f.get('photo');
+  if(file && file.size){ try{ photo = (await resize(file, 600, .8)).dataURL; big = (await resize(file, 1000, .8)).dataURL; }catch{} }
+  const p = newPlant({name:f.get('name').trim(), genus, photo, room:f.get('room').trim(), outdoor:f.get('outdoor') === 'on',
+    diam:f.get('diam') ? Number(f.get('diam')) : null, interval:c.water, lastPhoto:big ? Date.now() : null});
+  await DB.put('plants', p);
+  if(big) await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big});
+  await reload(); toast('Plante ajoutée 🌱'); openPlant(p.id);
 }
 
 /* =========================================================
-   9. ARROSAGE
+   12. BOUTURES
    ========================================================= */
+let PVIEW = 'plants';
+function cuttingStage(c){
+  if(c.potted) return {icon:'🪴', label:`Empotée le ${fmtDate(c.potted)}`, cls:'ok'};
+  if(c.roots) return {icon:'🌱', label:`Racines depuis le ${fmtDate(c.roots)}`, cls:'soon'};
+  return {icon:c.method === 'eau' ? '🫙' : '🌰', label:c.method === 'eau' ? 'Dans l’eau' : 'En terre', cls:'info'};
+}
+const waterChangeDue = c => c.method === 'eau' && !c.potted && Date.now() - (c.waterChanged || c.started) > 7*DAY;
+function renderCuttings(){
+  const box = $('#cuttings');
+  if(!CUTTINGS.length){ box.innerHTML = `<div class="empty">Aucune bouture en cours. Ajoute-en une, ou utilise « ✂️ Bouturer » depuis la fiche d’une plante.</div>`; return; }
+  box.innerHTML = CUTTINGS.map(c => { const st = cuttingStage(c), days = Math.floor((Date.now() - c.started)/DAY);
+    const slow = !c.roots && days > 56;
+    return `<div class="card">
+      <div class="wrow"><span class="ph" aria-hidden="true">${st.icon}</span>
+        <div class="info"><b>${esc(c.name)}</b><div class="small muted">Commencée le ${fmtDate(c.started)} · ${days} j</div>
+          <span class="pill ${st.cls}">${st.label}</span>${waterChangeDue(c) ? ' <span class="pill due">Changer l’eau</span>' : ''}</div></div>
+      ${!c.potted ? `<div class="bar" aria-hidden="true"><i style="width:${c.roots ? 75 : clamp(days/42*60, 5, 60)}%"></i></div>` : ''}
+      ${slow ? '<p class="small note" style="margin:8px 0 0">Pas de racines après 8 semaines : vérifie qu’un nœud est bien immergé, et mets-la au chaud et à la lumière.</p>' : ''}
+      <div class="row" style="margin-top:10px">
+        ${c.method === 'eau' && !c.potted ? `<button class="btn sm ghost" data-action="cut-water" data-id="${c.id}">💧 Eau changée</button>` : ''}
+        ${!c.roots && !c.potted ? `<button class="btn sm" data-action="cut-roots" data-id="${c.id}">🌱 Racines !</button>` : ''}
+        ${c.roots && !c.potted ? `<button class="btn sm" data-action="cut-pot" data-id="${c.id}">🪴 Empoter</button>` : ''}
+        <button class="btn sm danger" data-action="cut-del" data-id="${c.id}" style="flex:none">✕</button>
+      </div></div>`; }).join('') +
+    `<details class="card"><summary>Conseils de bouturage</summary><ul class="small">
+      <li>Coupe sous un nœud, retire les feuilles qui trempent.</li>
+      <li>Dans l’eau : change-la chaque semaine, lumière vive sans soleil direct.</li>
+      <li>Empote quand les racines font 3–5 cm, terre légère et humide les premières semaines.</li>
+      <li>Pothos, Tradescantia, Pilea et plante araignée : racines en 1 à 3 semaines. Ficus, Hoya : souvent plus long.</li></ul></details>`;
+}
+function cuttingForm(from){
+  const src = from && PLANTS.find(p => p.id === from);
+  openSheet('Nouvelle bouture', `<form id="cutting-form" class="card">
+    <label class="field"><span>Nom</span><input name="name" required value="${src ? esc('Bouture de ' + src.name) : ''}" placeholder="Bouture de pothos"></label>
+    <label class="field"><span>Type de plante</span><select name="genus">${genusOptions(src ? (src.genus||'').toLowerCase() : '')}</select></label>
+    <input type="hidden" name="from" value="${src ? src.id : ''}">
+    <label class="field"><span>Méthode</span><select name="method"><option value="eau">Dans l’eau</option><option value="terre">En terre</option></select></label>
+    <button class="btn block" type="submit">Commencer</button></form>`);
+}
+async function saveCutting(form){
+  const f = new FormData(form);
+  await DB.put('cuttings', {id:uid(), name:f.get('name').trim(), genus:f.get('genus'), from:f.get('from'), method:f.get('method'),
+    started:Date.now(), waterChanged:Date.now(), roots:null, potted:null});
+  await reload(); closeSheet(); showTab('plants'); setPView('cuttings'); toast('Bouture ajoutée ✂️');
+}
+async function cuttingAction(a, id){
+  const c = CUTTINGS.find(x => x.id === id); if(!c) return;
+  if(a === 'cut-water'){ c.waterChanged = Date.now(); toast('Eau changée'); }
+  if(a === 'cut-roots'){ c.roots = Date.now(); toast('Bravo, des racines 🌱'); }
+  if(a === 'cut-pot'){
+    c.potted = Date.now();
+    const src = PLANTS.find(p => p.id === c.from), care = getCare(c.genus, src?.family);
+    const p = newPlant({name:c.name.replace(/^Bouture de /i,'') + ' (bouture)', genus:c.genus || src?.genus || '', family:src?.family || '', sci:src?.sci || '',
+      interval:care.water, diam:8, room:src?.room || '', lastWatered:Date.now()});
+    await DB.put('plants', p); toast('Ajoutée à tes plantes 🪴');
+  }
+  if(a === 'cut-del'){ if(!confirm(`Supprimer « ${c.name} » ?`)) return; await DB.del('cuttings', id); await reload(); return; }
+  await DB.put('cuttings', c); await reload();
+}
+function setPView(v){
+  PVIEW = v;
+  document.querySelectorAll('[data-action="pview"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+  $('#pview-plants').hidden = v !== 'plants'; $('#pview-cuttings').hidden = v !== 'cuttings';
+}
+
+/* =========================================================
+   13. ARROSAGE, MÉTÉO, TOURNÉE, CALENDRIER
+   ========================================================= */
+let WVIEW = 'list';
+function renderWeather(){
+  const box = $('#wx'), i = wxDays();
+  if(i === null){ box.innerHTML = ''; return; }
+  const out = [], hot = wxHot(), cold = wxCold(), rain = wxRain(), outdoor = PLANTS.filter(p => p.outdoor);
+  const frost = outdoor.filter(p => cold !== null && cold < minTemp(p));
+  if(frost.length) out.push(`<div class="warn" style="margin-bottom:8px">🥶 <b>Froid prévu (${fr(cold)} °C)</b> : rentre ${frost.map(p => esc(p.name)).join(', ')}.</div>`);
+  if(hot !== null && hot >= 26 && !isWinter()) out.push(`<div class="note">🌡️ <b>Chaleur (${fr(hot)} °C)</b> : arrosages avancés${outdoor.length ? ', surtout dehors' : ''}. Arrose tôt le matin ou le soir.</div>`);
+  if(rain && outdoor.length) out.push(`<div class="info-box">🌧️ Il a plu (${fr(rain.mm)} mm) : tes plantes d’extérieur comptent comme arrosées.</div>`);
+  const tmin = WX.temperature_2m_min[i], tmax = WX.temperature_2m_max[i];
+  out.push(`<p class="small muted" style="margin:0 0 10px">Météo du jour : ${fr(tmin,0)}° / ${fr(tmax,0)}°${WX.precipitation_sum[i] ? ` · ${fr(WX.precipitation_sum[i])} mm` : ''}</p>`);
+  box.innerHTML = out.join('');
+}
 function renderWater(){
+  renderWeather();
   $('#season-note').textContent = isWinter()
-    ? '❄️ Hiver (nov. → fév.) : les intervalles sont automatiquement espacés ×1,5.'
+    ? '❄️ Hiver (nov. → fév.) : intervalles automatiquement espacés ×1,5.'
     : '🌱 En saison : intervalles normaux.';
   const list = PLANTS.map(p => ({p, w:waterInfo(p)})).sort((a,b) => a.w.days - b.w.days);
-  const n = list.filter(x => x.w.cls === 'late' || x.w.cls === 'due').length;
+  const dueCuttings = CUTTINGS.filter(waterChangeDue);
+  const n = list.filter(x => x.w.cls === 'late' || x.w.cls === 'due').length + dueCuttings.length;
   const badge = $('#water-badge'); badge.hidden = !n; badge.textContent = n;
   try{ if('setAppBadge' in navigator) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); }catch{}
   const box = $('#water');
-  if(!list.length){ box.innerHTML = '<div class="empty">Ajoute des plantes pour suivre l’arrosage.</div>'; return; }
-  box.innerHTML = list.map(({p,w}) => `<div class="card wrow">
+  if(!list.length) box.innerHTML = '<div class="empty">Ajoute des plantes pour suivre l’arrosage.</div>';
+  else box.innerHTML = WVIEW === 'round' ? roundHTML(list) : list.map(({p,w}) => waterRow(p, w)).join('');
+  $('#water-cuttings').innerHTML = dueCuttings.length ? `<div class="group-title">Boutures</div>` + dueCuttings.map(c => `<div class="card wrow">
+    <span class="ph" aria-hidden="true">🫙</span><div class="info"><b>${esc(c.name)}</b><div class="small muted">Change l’eau du vase</div></div>
+    <div class="actions"><button class="btn sm" data-action="cut-water" data-id="${c.id}">💧 Fait</button></div></div>`).join('') : '';
+}
+function waterRow(p, w, done=false){
+  return `<div class="card wrow${done ? ' done' : ''}">
     ${thumb(p)}<div class="info"><b>${esc(p.name)}</b>
       <div class="small muted">${esc(p.room || '')}${p.room ? ' · ' : ''}tous les ${w.iv} j</div>
-      <span class="pill ${w.cls}">${w.label}</span></div>
+      <span class="pill ${done ? 'ok' : w.cls}">${done ? '✓ Arrosée aujourd’hui' : w.label}</span></div>
     <div class="actions">
-      <button class="btn sm" data-action="water" data-id="${p.id}" aria-label="Marquer ${esc(p.name)} comme arrosée">💧 Fait</button>
-      ${w.cls !== 'ok' && p.lastWatered ? `<button class="btn sm ghost" data-action="postpone" data-id="${p.id}" aria-label="Terre encore humide, reporter de 2 jours">+2 j</button>` : ''}
-    </div></div>`).join('');
+      ${done ? `<button class="btn sm ghost" data-action="unwater" data-id="${p.id}" aria-label="Annuler l’arrosage de ${esc(p.name)}">↩︎</button>`
+             : `<button class="btn sm" data-action="water" data-id="${p.id}" aria-label="Marquer ${esc(p.name)} comme arrosée">💧 Fait</button>`}
+      ${!done && w.cls !== 'ok' && p.lastWatered ? `<button class="btn sm ghost" data-action="postpone" data-id="${p.id}" aria-label="Terre encore humide, reporter de 2 jours">+2 j</button>` : ''}
+    </div></div>`;
+}
+function roundHTML(list){
+  const today = startOfDay(Date.now());
+  const items = list.filter(({p,w}) => w.cls === 'late' || w.cls === 'due' || (p.lastWatered && p.lastWatered >= today && !w.rain));
+  if(!items.length) return '<div class="empty">🎉 Rien à arroser aujourd’hui.</div>';
+  const done = items.filter(({p}) => p.lastWatered >= today).length, groups = new Map();
+  for(const it of items){ const k = it.p.room || 'Sans pièce'; if(!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
+  const order = [...groups.keys()].sort((a,b) => a === 'Sans pièce' ? 1 : b === 'Sans pièce' ? -1 : a.localeCompare(b,'fr'));
+  return `<div class="card"><b>${done === items.length ? '🎉 Tournée terminée !' : `Tournée du jour : ${done}/${items.length}`}</b>
+      <div class="bar" role="img" aria-label="${done} sur ${items.length}"><i style="width:${items.length ? done/items.length*100 : 0}%"></i></div></div>` +
+    order.map(k => `<div class="group-title">${esc(k)}</div>` + groups.get(k).map(({p,w}) => waterRow(p, w, p.lastWatered >= today)).join('')).join('');
 }
 async function water(id){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  p.lastWatered = Date.now(); p.postpone = 0;
-  await DB.put(p); await reload(); toast(`${p.name} arrosée 💧`);
+  p.prevWatered = p.lastWatered; p.lastWatered = Date.now(); p.postpone = 0;
+  await DB.put('plants', p); await reload(); toast(`${p.name} arrosée 💧`);
   if($('#sheet').open && $('#plant-form')?.dataset.id === id) openPlant(id);
+}
+async function unwater(id){
+  const p = PLANTS.find(x => x.id === id); if(!p) return;
+  p.lastWatered = p.prevWatered ?? null; p.prevWatered = null; await DB.put('plants', p); await reload();
 }
 async function postpone(id){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  p.postpone = (p.postpone || 0) + 2; await DB.put(p); await reload(); toast('Reporté de 2 jours');
+  p.postpone = (p.postpone || 0) + 2; await DB.put('plants', p); await reload(); toast('Reporté de 2 jours');
+}
+function exportICS(){
+  if(!PLANTS.length){ toast('Ajoute d’abord des plantes'); return; }
+  const [hh, mm] = ($('#ics-hour').value || '09:00').split(':').map(Number); ls.set('verdure.icshour', $('#ics-hour').value);
+  const pad = n => String(n).padStart(2,'0'), fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const e = s => String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+  const fold = l => (l.match(/.{1,60}/gu) || ['']).join('\r\n ');
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Verdure//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Verdure'];
+  for(const p of PLANTS){
+    const w = waterInfo(p), now = Date.now();
+    let start = new Date(Math.max(startOfDay(now), startOfDay(w.next || now))); start.setHours(hh, mm, 0, 0);
+    if(start.getTime() < now) start = new Date(start.getTime() + DAY);
+    const end = new Date(start.getTime() + 10*60000), care = getCare(p.genus, p.family);
+    L.push('BEGIN:VEVENT', `UID:verdure-${p.id}@verdure`, `DTSTAMP:${stamp}`, `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
+      `RRULE:FREQ=DAILY;INTERVAL=${w.iv}`, fold(`SUMMARY:${e('💧 Arroser ' + p.name)}`),
+      fold(`DESCRIPTION:${e(`${p.room ? p.room + ' · ' : ''}Tous les ${w.iv} jours. ${care.tip} Vérifie la terre au doigt avant d’arroser.`)}`),
+      'BEGIN:VALARM','ACTION:DISPLAY', fold(`DESCRIPTION:${e('Arroser ' + p.name)}`),'TRIGGER:PT0M','END:VALARM','END:VEVENT');
+  }
+  L.push('END:VCALENDAR');
+  saveFile(new Blob([L.join('\r\n') + '\r\n'], {type:'text/calendar'}), 'verdure-arrosage.ics');
+}
+function setWView(v){
+  WVIEW = v; document.querySelectorAll('[data-action="wview"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); renderWater();
 }
 
 /* =========================================================
-   10. NAVIGATION & FEUILLE
+   14. ATELIER 3D : pot sur mesure + tuteur QR
+   ========================================================= */
+let AVIEW = 'pot', POT = null, VIEW3D = {yaw:-0.6, pitch:0.5}, potTimer;
+function refreshPlantSelects(){
+  const ps = $('#pp-plant'), cur = ps.value;
+  ps.innerHTML = '<option value="">Sur mesure</option>' + PLANTS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  if([...ps.options].some(o => o.value === cur)) ps.value = cur;
+  const ss = $('#st-plant'), scur = ss.value;
+  ss.innerHTML = PLANTS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  if([...ss.options].some(o => o.value === scur)) ss.value = scur;
+  $('#stake-empty').innerHTML = PLANTS.length ? '' : '<div class="empty">Ajoute d’abord une plante : le tuteur porte son nom et un QR code vers sa fiche.</div>';
+  $('#stake-ui').hidden = !PLANTS.length;
+  if(AVIEW === 'stake' && PLANTS.length) updateStake();
+}
+function setAView(v){
+  AVIEW = v; document.querySelectorAll('[data-action="aview"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+  $('#aview-pot').hidden = v !== 'pot'; $('#aview-stake').hidden = v !== 'stake';
+  if(v === 'pot') updatePot(); else if(PLANTS.length) updateStake();
+}
+function potDefaults({plantId, genus}){
+  const p = plantId && PLANTS.find(x => x.id === plantId), c = getCare(p ? p.genus : genus, p?.family), pot = POTS[c.pot] || POTS.standard;
+  $('#pp-plant').value = p ? p.id : '';
+  $('#pp-type').value = pot.type; $('#pp-hole').value = pot.hole;
+  const D = p?.diam ? clamp(p.diam + 3, 4, 23) : 12;
+  $('#pp-d').value = D; $('#pp-h').value = clamp(Math.round(D * (c.pot === 'tall' ? 1.1 : 0.9) * 2)/2, 3, 22);
+  $('#pp-taper').value = c.pot === 'tall' ? 6 : 12;
+}
+function readPot(){
+  const n = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) ? v : d; };
+  return {type:$('#pp-type').value, D:clamp(n('#pp-d',12),4,23)*10, H:clamp(n('#pp-h',11),3,22)*10, wall:clamp(n('#pp-wall',2.4),1.2,5),
+    taper:n('#pp-taper',12)/100, hole:n('#pp-hole',12), pattern:$('#pp-pattern').value, amp:n('#pp-amp',2.5), ribs:n('#pp-ribs',18), twist:n('#pp-twist',0.25)};
+}
+function updatePotLabels(o){
+  $('#o-taper').textContent = Math.round(o.taper*100) + ' %';
+  $('#o-hole').textContent = o.type === 'cache' ? '—' : (o.hole ? o.hole + ' mm' : 'aucun');
+  $('#o-amp').textContent = fr(o.amp) + ' mm'; $('#o-ribs').textContent = o.ribs;
+  $('#o-twist').textContent = (o.twist > 0 ? '+' : '') + fr(o.twist, 2) + ' tour';
+  const p = o.pattern; $('#pattern-opts').hidden = p === 'smooth';
+  $('#pp-amp').closest('.field').hidden = p.includes('facets'); $('#pp-twist').closest('.field').hidden = !['twist','twistfacets'].includes(p);
+  $('#pp-hole').disabled = o.type === 'cache';
+}
+function updatePot(){
+  const o = readPot(); updatePotLabels(o);
+  POT = {o, parts:designPot(o, 72, 24)};
+  // Placement côte à côte pour l'aperçu
+  let x = 0; const placed = POT.parts.map((p,i) => { const w = p.bounds.size[0]; const dx = i === 0 ? 0 : x + w/2 + 12; x = i === 0 ? w/2 : dx + w/2;
+    return {tris:dx ? p.tris.map(t => t.map(([a,b,c]) => [a+dx,b,c])) : p.tris, color:i === 0 ? [79,154,92] : [120,170,200]}; });
+  drawMesh($('#pot-canvas'), placed);
+  const stats = [], warns = [];
+  for(const p of POT.parts){
+    const [sx,sy,sz] = p.bounds.size, g = p.volume/1000*1.27;
+    stats.push(`<span class="pill soon">${esc(p.name)} : Ø ${fr(Math.max(sx,sy)/10)} × ${fr(sz/10)} cm · ~${fr(g,0)} g</span>`);
+    if(Math.max(sx,sy) > Math.min(BED.x, BED.y) - 6 || sz > BED.z) warns.push(`${p.name} ne tient pas sur le plateau de la Kobra 3 (25 × 25 × 26 cm).`);
+    if(p.water) stats.push(`<span class="pill info">💧 réserve ≈ ${fr(p.water/10,0)*10} ml</span>`);
+  }
+  if(o.type === 'saucer' || o.type === 'simple') if(!o.hole) warns.push('Pas de trou de drainage : réservé aux cache-pots.');
+  if(o.wall < 1.6) warns.push('Paroi fine : imprime avec au moins 3 périmètres.');
+  $('#pot-stats').innerHTML = stats.join('');
+  $('#pot-warn').innerHTML = warns.map(w => `<p class="warn">${esc(w)}</p>`).join('');
+  const share = canShareFiles();
+  $('#pot-dl').innerHTML = POT.parts.map((p,i) => `<button class="btn" data-action="dl-part" data-i="${i}">⬇️ ${esc(p.name)}.stl</button>`).join('') +
+    (share ? `<button class="btn ghost" data-action="dl-part" data-i="all" data-share="1">📤 Envoyer (mail, Drive…)</button>` : '');
+}
+function potFileName(part){ const p = PLANTS.find(x => x.id === $('#pp-plant').value); return `verdure-${slug(p ? p.name : 'pot')}-${part}.stl`; }
+async function downloadPot(i, share){
+  if(!POT) return; toast('Génération du fichier…');
+  await new Promise(r => setTimeout(r, 30));
+  const parts = designPot(POT.o, 144, 72), pick = i === 'all' ? parts : [parts[+i]];
+  if(share && pick.length > 1 && navigator.canShare){
+    const files = pick.map(p => new File([Mesh.stl(p.tris, p.name)], potFileName(p.name), {type:'model/stl'}));
+    if(navigator.canShare({files})){ try{ await navigator.share({files, title:'Verdure : fichiers STL'}); }catch{} return; }
+  }
+  for(const p of pick) await saveFile(new Blob([Mesh.stl(p.tris, p.name)], {type:'model/stl'}), potFileName(p.name), share);
+}
+// Rendu 3D simple : projection orthographique, tri du plus loin au plus proche, ombrage diffus
+function drawMesh(canvas, parts){
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W = canvas.clientWidth || 600, H = canvas.clientHeight || 450;
+  canvas.width = W*dpr; canvas.height = H*dpr; const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const all = parts.flatMap(p => p.tris.map(t => [t, p.color])); if(!all.length) return;
+  const b = Mesh.bounds(parts.flatMap(p => p.tris)), cx = (b.mn[0]+b.mx[0])/2, cy = (b.mn[1]+b.mx[1])/2, cz = (b.mn[2]+b.mx[2])/2;
+  const ext = Math.hypot(...b.size) || 1, s = Math.min(W, H) * 0.85 / ext;
+  const cyaw = Math.cos(VIEW3D.yaw), syaw = Math.sin(VIEW3D.yaw), cp = Math.cos(VIEW3D.pitch), spi = Math.sin(VIEW3D.pitch);
+  const tf = ([x,y,z]) => { x -= cx; y -= cy; z -= cz; const x1 = x*cyaw - y*syaw, y1 = x*syaw + y*cyaw; return [x1, y1*cp - z*spi, y1*spi + z*cp]; };
+  const L = [-0.35, -0.75, 0.55], ll = Math.hypot(...L); L.forEach((v,i) => L[i] = v/ll);
+  const faces = [];
+  for(const [t, col] of all){
+    const a = tf(t[0]), bb = tf(t[1]), c = tf(t[2]);
+    const ux=bb[0]-a[0], uy=bb[1]-a[1], uz=bb[2]-a[2], vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const l = Math.hypot(nx,ny,nz); if(!l) continue; nx/=l; ny/=l; nz/=l;
+    if(ny > 0.02) continue; // face cachée (la caméra regarde vers +y)
+    faces.push({a, b:bb, c, d:(a[1]+bb[1]+c[1])/3, k:0.35 + 0.65*Math.max(0, nx*L[0] + ny*L[1] + nz*L[2]), col});
+  }
+  faces.sort((p,q) => q.d - p.d);
+  const X = p => W/2 + p[0]*s, Y = p => H/2 - p[2]*s;
+  for(const f of faces){
+    const [r,g,bl] = f.col.map(v => Math.round(v*f.k)), fill = `rgb(${r},${g},${bl})`;
+    ctx.fillStyle = fill; ctx.strokeStyle = fill; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(X(f.a), Y(f.a)); ctx.lineTo(X(f.b), Y(f.b)); ctx.lineTo(X(f.c), Y(f.c)); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+}
+function initDrag(canvas){
+  let last = null;
+  canvas.addEventListener('pointerdown', e => { last = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; });
+  canvas.addEventListener('pointermove', e => { if(!last || !POT) return;
+    VIEW3D.yaw += (e.clientX - last[0]) * 0.01; VIEW3D.pitch = clamp(VIEW3D.pitch + (e.clientY - last[1]) * 0.01, -0.3, 1.45); last = [e.clientX, e.clientY];
+    cancelAnimationFrame(initDrag.raf); initDrag.raf = requestAnimationFrame(updatePotView); });
+  const up = () => { last = null; canvas.style.cursor = 'grab'; };
+  canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+}
+function updatePotView(){ if(!POT) return;
+  let x = 0; drawMesh($('#pot-canvas'), POT.parts.map((p,i) => { const w = p.bounds.size[0]; const dx = i === 0 ? 0 : x + w/2 + 12; x = i === 0 ? w/2 : dx + w/2;
+    return {tris:dx ? p.tris.map(t => t.map(([a,b,c]) => [a+dx,b,c])) : p.tris, color:i === 0 ? [79,154,92] : [120,170,200]}; })); }
+
+// ---- Tuteur QR ----
+let STAKE = null;
+function rasterText(lines, wMM, hMM, ppm=6){
+  const c = document.createElement('canvas'); c.width = Math.round(wMM*ppm); c.height = Math.round(hMM*ppm);
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for(const L of lines){ if(!L.text) continue;
+    let px = L.h*ppm*1.4; const font = s => `700 ${s}px Arial, Helvetica, sans-serif`; ctx.font = font(px);
+    const w = ctx.measureText(L.text).width; if(w > c.width*0.98){ px *= c.width*0.98/w; ctx.font = font(px); }
+    ctx.fillText(L.text, c.width/2, L.y*ppm); }
+  const img = ctx.getImageData(0, 0, c.width, c.height).data, runs = []; let open = new Map();
+  for(let y=0;y<c.height;y++){ const next = new Map(); let x = 0;
+    while(x < c.width){ if(img[(y*c.width+x)*4+3] > 120){ let x2 = x; while(x2 < c.width && img[(y*c.width+x2)*4+3] > 120) x2++;
+        const k = x + ',' + x2, r = open.get(k);
+        if(r){ r.y1 = (y+1)/ppm; next.set(k, r); } else { const nr = {x0:x/ppm, x1:x2/ppm, y0:y/ppm, y1:(y+1)/ppm}; runs.push(nr); next.set(k, nr); }
+        x = x2; } else x++; }
+    open = next; }
+  return runs;
+}
+function stakeUrl(p){
+  const base = ($('#st-url').value || (location.origin + location.pathname)).trim();
+  return `${base}${base.includes('?') ? '&' : '?'}p=${p.id.slice(0,8)}&g=${encodeURIComponent((p.genus||'').toLowerCase())}&n=${encodeURIComponent(p.name.slice(0,24))}`;
+}
+function updateStake(){
+  const p = PLANTS.find(x => x.id === $('#st-plant').value) || PLANTS[0]; if(!p) return;
+  if($('#st-plant').value !== p.id) $('#st-plant').value = p.id;
+  const qrW = Number($('#st-size').value); $('#o-qr').textContent = qrW + ' mm';
+  let matrix; try{ matrix = QR.encode(stakeUrl(p), 'L'); }catch(e){ $('#stake-warn').innerHTML = `<p class="warn">${esc(e.message)} : raccourcis l’adresse ou le nom.</p>`; return; }
+  const l2 = $('#st-line2').value, w = waterInfo(p);
+  const line2 = l2 === 'interval' ? `Arroser tous les ${Number(p.interval)||7} j` : l2 === 'sci' ? (p.sci || '') : l2 === 'room' ? (p.room || '') : '';
+  const mod = qrW/matrix.size, m = Math.max(4, 2*mod + 1.2), W = qrW + 2*m, textW = W - 4, textH = line2 ? 14 : 9;
+  const lines = [{text:p.name, h:6, y:0}, {text:line2, h:3.6, y:8.8}];
+  const textRuns = rasterText(lines, textW, textH);
+  STAKE = {p, ...designStake({matrix, qrW, textRuns, textW, textH}), matrix, textRuns, textW, lines};
+  drawStake($('#stake-canvas'), STAKE, false);
+  $('#stake-stats').innerHTML = `<span class="pill soon">${fr(STAKE.W/10)} × ${fr(STAKE.total/10)} cm</span><span class="pill soon">QR v${matrix.version} · module ${fr(mod,2)} mm</span><span class="pill info">Changement de couleur à ${fr(STAKE.thick)} mm</span>`;
+  $('#stake-warn').innerHTML = mod < 0.85 ? '<p class="warn">QR très dense : augmente sa taille pour qu’il reste lisible (module ≥ 0,9 mm avec une buse de 0,4).</p>' : '';
+}
+function drawStake(canvas, S, paper){
+  const ppm = paper ? 12 : 0, spike = paper ? 0 : 75;
+  const W = paper ? Math.round(S.W*ppm) : (canvas.clientWidth || 300), H = paper ? Math.round(S.H*ppm) : (canvas.clientHeight || 400);
+  const dpr = paper ? 1 : Math.min(2, window.devicePixelRatio || 1); canvas.width = W*dpr; canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const s = paper ? ppm : Math.min(W/(S.W+10), H/(S.H+spike+10)), ox = W/2, oy = paper ? H : (H - (S.H+spike)*s)/2 + S.H*s;
+  const X = x => ox + x*s, Y = y => oy - y*s;
+  ctx.fillStyle = '#ffffff';
+  const poly = pts => { ctx.beginPath(); pts.forEach(([x,y],i) => i ? ctx.lineTo(X(x),Y(y)) : ctx.moveTo(X(x),Y(y))); ctx.closePath(); ctx.fill(); };
+  if(!paper){ ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 8; poly([[-4,2],[-4,-58],[0,-75],[4,-58],[4,2]]); }
+  poly(Mesh.roundRect(-S.W/2, 0, S.W/2, S.H, 3)); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1d2a1f'; const mod = S.mod;
+  S.matrix.modules.forEach((row, r) => row.forEach((d, c) => { if(d) ctx.fillRect(X(S.qx + c*mod), Y(S.qy - r*mod), mod*s + 0.5, mod*s + 0.5); }));
+  for(const t of S.textRuns) ctx.fillRect(X(S.tx + t.x0), Y(S.ty - t.y0), (t.x1 - t.x0)*s + 0.3, (t.y1 - t.y0)*s + 0.3);
+}
+async function downloadStake(part){
+  if(!STAKE) return; const name = `verdure-tuteur-${slug(STAKE.p.name)}`;
+  if(part === 'png'){ const c = document.createElement('canvas'); drawStake(c, STAKE, true);
+    c.toBlob(b => saveFile(b, name + '.png'), 'image/png'); return; }
+  const tris = part === 'base' ? STAKE.base : part === 'relief' ? STAKE.relief : STAKE.base.concat(STAKE.relief);
+  await saveFile(new Blob([Mesh.stl(tris, part)], {type:'model/stl'}), `${name}-${part}.stl`);
+}
+
+/* =========================================================
+   15. MAISON : pièces, vérification, suggestions
+   ========================================================= */
+function renderRooms(){
+  const rooms = getRooms(), box = $('#rooms');
+  box.innerHTML = rooms.length ? rooms.map((r,i) => { const n = PLANTS.filter(p => roomOf(p) === undefined ? false : roomOf(p).name === r.name).length;
+    return `<button class="card wrow" style="width:100%;text-align:left;cursor:pointer;color:inherit" data-action="room-edit" data-i="${i}">
+      <span class="ph" aria-hidden="true">${ROOM_LVL[r.level].split(' ')[0]}</span>
+      <span class="info"><b>${esc(r.name)}</b><div class="small muted">${ROOM_LVL[r.level].slice(3)} · ${n} plante${n > 1 ? 's' : ''}</div></span>
+      <span class="muted" aria-hidden="true">›</span></button>`; }).join('')
+    : '<div class="empty">Aucune pièce. Ajoute ton salon, ta chambre, le grenier…</div>';
+  const bad = PLANTS.map(p => ({p, room:roomOf(p)})).filter(x => x.room).map(x => ({...x, fit:lightFit(getCare(x.p.genus, x.p.family).light, x.room.level)})).filter(x => x.fit.cls !== 'ok');
+  $('#misplaced').innerHTML = bad.length ? `<div class="group-title">À déplacer</div>` + bad.map(({p, room, fit}) => `<button class="card wrow" style="width:100%;text-align:left;cursor:pointer;color:inherit" data-action="plant" data-id="${p.id}">
+      ${thumb(p)}<span class="info"><b>${esc(p.name)}</b><div class="small muted">${esc(room.name)}</div><span class="pill ${fit.cls}">${fit.msg}</span></span></button>`).join('') : '';
+  const sel = $('#sg-light'), cur = sel.value;
+  sel.innerHTML = rooms.map((r,i) => `<option value="r${i}">${esc(r.name)} (${ROOM_LVL[r.level].slice(3)})</option>`).join('') +
+    ROOM_LVL.map((l,i) => `<option value="l${i}">${l}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === cur) ? cur : (rooms.length ? 'r0' : 'l2');
+  renderSuggest();
+}
+function roomForm(i){
+  const r = i != null ? getRooms()[i] : null, a = r?.auto || {o:'S', d:'1', x:'0'};
+  openSheet(r ? r.name : 'Nouvelle pièce', `<form id="room-form" class="card" data-i="${i ?? ''}">
+    <label class="field"><span>Nom</span><input name="name" required value="${esc(r?.name || '')}" placeholder="Salon, grenier, balcon…"></label>
+    <label class="field"><span>Fenêtre principale orientée</span><select name="o">${Object.entries(ORIENT).map(([k,[l]]) => `<option value="${k}"${a.o===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="field"><span>Distance de la plante à la fenêtre</span><select name="d">${DIST.map((l,k) => `<option value="${k}"${String(a.d)===String(k)?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="field"><span>Devant la fenêtre</span><select name="x">${OBST.map((l,k) => `<option value="${k}"${String(a.x)===String(k)?' selected':''}>${l}</option>`).join('')}</select></label>
+    <p class="tip" id="room-est" aria-live="polite"></p>
+    <label class="field"><span>Corriger si besoin</span><select name="level"><option value="auto">Garder l’estimation</option>${ROOM_LVL.map((l,k) => `<option value="${k}"${r && !r.auto && r.level===k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+    <button class="btn block" type="submit">Enregistrer</button>
+    ${r ? `<button class="btn danger block" type="button" data-action="room-del" data-i="${i}" style="margin-top:8px">Supprimer la pièce</button>` : ''}
+  </form>`);
+  updateRoomEstimate();
+}
+function updateRoomEstimate(){
+  const f = $('#room-form'); if(!f) return;
+  const lvl = estimateLight(f.o.value, f.d.value, f.x.value);
+  $('#room-est').innerHTML = `Estimation : <b>${ROOM_LVL[lvl]}</b>`;
+}
+function saveRoom(form){
+  const rooms = getRooms(), i = form.dataset.i === '' ? null : Number(form.dataset.i);
+  const auto = {o:form.o.value, d:form.d.value, x:form.x.value}, manual = form.level.value !== 'auto';
+  const room = {name:form.name.value.trim(), level:manual ? Number(form.level.value) : estimateLight(auto.o, auto.d, auto.x), auto:manual ? null : auto};
+  if(!room.name) return;
+  if(i === null) rooms.push(room); else rooms[i] = room;
+  setRooms(rooms); closeSheet(); renderRooms(); renderPlants(); toast('Pièce enregistrée');
+}
+const SPECIES = (() => { const seen = new Map(); for(const [g,row] of Object.entries(CARE)) if(!seen.has(row)) seen.set(row, g); return [...seen].map(([row,g]) => ({g, row})); })();
+function renderSuggest(){
+  const v = $('#sg-light').value || 'l2', rooms = getRooms();
+  const lvl = v[0] === 'r' ? rooms[Number(v.slice(1))]?.level ?? 2 : Number(v.slice(1));
+  const pet = $('#sg-pet').checked, effort = $('#sg-effort').value, dry = $('#sg-dry').checked;
+  const list = SPECIES.filter(({row}) => { const [, light, water, hum, , , tox] = row, need = LVL[light];
+    if(light !== 'tolerante'){ if(lvl < need) return false; if(lvl === 4 && need <= 1) return false; }
+    if(pet && tox !== 0) return false;
+    if(effort === 'easy' && !(water >= 10 && hum !== 'élevée')) return false;
+    if(effort === 'medium' && hum === 'élevée') return false;
+    if(dry && hum === 'élevée') return false;
+    return true; })
+    .sort((a,b) => Math.abs(LVL[a.row[1]] - lvl) - Math.abs(LVL[b.row[1]] - lvl) || b.row[2] - a.row[2]);
+  $('#suggest').innerHTML = list.length ? `<p class="small muted">${list.length} idée${list.length > 1 ? 's' : ''}, les mieux adaptées d’abord.</p>` + list.map(({g,row}) => `
+    <button class="card result" data-action="species-info" data-g="${g}">
+      <span class="ph" aria-hidden="true">${row[6] === 0 ? '🐾' : '🌿'}</span>
+      <span class="info"><b>${esc(row[0])}</b><div class="small muted">${LIGHT[row[1]].slice(3)} · arrosage ~${row[2]} j · humidité ${row[3]}</div></span></button>`).join('')
+    : '<div class="empty">Aucune plante ne coche toutes les cases. Assouplis un critère.</div>';
+}
+function speciesInfo(g){
+  const c = getCare(g, '');
+  openSheet(c.name, careHTML(c) + potHTML(c, null, g) +
+    `<button class="btn ghost block" data-action="manual-add-g" data-g="${g}">＋ Je l’ai, l’ajouter à mes plantes</button>`);
+}
+
+/* =========================================================
+   16. NAVIGATION, RÉGLAGES, SAUVEGARDE
    ========================================================= */
 function showTab(name){
   document.querySelectorAll('.tab').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
   document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
   window.scrollTo({top:0});
+  if(name === 'atelier') requestAnimationFrame(() => AVIEW === 'pot' ? updatePot() : PLANTS.length && updateStake());
 }
 function openSheet(title, html){
   $('#sheet-title').textContent = title; $('#sheet-body').innerHTML = html;
-  const d = $('#sheet'); if(!d.open) d.showModal(); $('#sheet-body').scrollTop = 0; d.scrollTop = 0;
+  const d = $('#sheet'); if(!d.open) d.showModal(); d.scrollTop = 0;
 }
-const closeSheet = () => $('#sheet').close();
-
-/* =========================================================
-   11. RÉGLAGES : clé, export, import, reset
-   ========================================================= */
-function exportData(){
-  const blob = new Blob([JSON.stringify({app:'verdure', v:1, date:new Date().toISOString(), plants:PLANTS})], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `verdure-${new Date().toISOString().slice(0,10)}.json`; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+const closeSheet = () => { if($('#sheet').open) $('#sheet').close(); };
+async function exportData(){
+  const photos = await DB.all('photos');
+  const data = {app:'verdure', v:2, date:new Date().toISOString(), plants:PLANTS, cuttings:CUTTINGS, photos,
+    rooms:getRooms(), settings:{lat:ls.get('verdure.lat'), lon:ls.get('verdure.lon')}};
+  saveFile(new Blob([JSON.stringify(data)], {type:'application/json'}), `verdure-${localISO(Date.now())}.json`);
 }
 async function importData(file){
   try{
     const data = JSON.parse(await file.text());
     if(!Array.isArray(data.plants)) throw 0;
-    for(const p of data.plants) if(p && p.id && p.name) await DB.put(p);
+    for(const p of data.plants) if(p && p.id && p.name) await DB.put('plants', p);
+    for(const c of data.cuttings || []) if(c && c.id) await DB.put('cuttings', c);
+    for(const ph of data.photos || []) if(ph && ph.id && ph.plantId) await DB.put('photos', ph);
+    if(Array.isArray(data.rooms) && data.rooms.length){ const cur = getRooms(); for(const r of data.rooms) if(!cur.some(x => x.name === r.name)) cur.push(r); setRooms(cur); }
+    if(data.settings?.lat){ ls.set('verdure.lat', data.settings.lat); ls.set('verdure.lon', data.settings.lon); }
     await reload(); toast(`${data.plants.length} plante(s) importée(s)`);
   }catch{ toast('Fichier de sauvegarde invalide'); }
 }
+function openGuest(name, genus){
+  const c = getCare(genus, '');
+  openSheet(name || c.name, `<p class="info-box">Cette plante n’est pas enregistrée ici. Sur iPhone, l’app de l’écran d’accueil et Safari ont des données séparées : pour arroser depuis un tuteur, utilise Verdure dans Safari, ou importe-y ta sauvegarde (Réglages).</p>` + careHTML(c));
+}
 
 /* =========================================================
-   12. ÉVÉNEMENTS
+   17. ÉVÉNEMENTS
    ========================================================= */
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-action]'); if(!el) return;
@@ -764,54 +1654,107 @@ document.addEventListener('click', async e => {
   switch(a){
     case 'tab': showTab(el.dataset.tab); break;
     case 'mode': setMode(el.dataset.mode); break;
+    case 'pview': setPView(el.dataset.v); break;
+    case 'wview': setWView(el.dataset.v); break;
+    case 'aview': setAView(el.dataset.v); break;
     case 'rm-shot': SHOTS.splice(+el.dataset.i, 1); renderShots(); break;
     case 'analyze': analyze(); break;
     case 'species': openSpecies(+el.dataset.i); break;
     case 'add-from-scan': el.disabled = true; await addFromScan(+el.dataset.i); break;
     case 'plant': openPlant(id); break;
+    case 'photo': openPhoto(id, el.dataset.plant); break;
+    case 'photo-del': if(confirm('Supprimer cette photo ?')){ await DB.del('photos', id); openPlant(el.dataset.plant); } break;
     case 'water': water(id); break;
+    case 'unwater': unwater(id); break;
     case 'postpone': postpone(id); break;
     case 'manual-add': manualAdd(); break;
+    case 'manual-add-g': manualAdd(); requestAnimationFrame(() => { const s = $('#manual-form select[name=genus]'); if(s){ s.value = el.dataset.g; $('#manual-form input[name=name]').value = getCare(el.dataset.g,'').name; } }); break;
     case 'diagnose-plant': closeSheet(); showTab('scan'); setMode('diagnose'); DIAG_PLANT = id; renderDiagContext(); break;
     case 'diag-note': {
-      const p = PLANTS.find(x => x.id === DIAG_PLANT), r = renderDiseases.last;
+      const p = PLANTS.find(x => x.id === DIAG_PLANT), r = LAST_DISEASE;
       if(p && r){ p.notes = `${p.notes ? p.notes + '\n' : ''}${fmtDate(Date.now())} : diagnostic « ${r.label || r.description || r.name} » (${Math.round((r.score||0)*100)} %)`;
-        await DB.put(p); await reload(); toast('Ajouté aux notes'); }
+        await DB.put('plants', p); await reload(); toast('Ajouté aux notes'); }
       break; }
     case 'delete': {
       const p = PLANTS.find(x => x.id === id);
-      if(p && confirm(`Supprimer ${p.name} ?`)){ await DB.del(id); await reload(); closeSheet(); toast('Supprimée'); }
+      if(p && confirm(`Supprimer ${p.name} et ses photos ?`)){
+        for(const ph of await DB.photosOf(id)) await DB.del('photos', ph.id);
+        await DB.del('plants', id); await reload(); closeSheet(); toast('Supprimée'); }
       break; }
+    case 'gen-pot': closeSheet(); showTab('atelier'); setAView('pot'); potDefaults({plantId:id, genus:el.dataset.g}); updatePot(); break;
+    case 'gen-stake': closeSheet(); showTab('atelier'); setAView('stake'); $('#st-plant').value = id; updateStake(); break;
+    case 'dl-part': downloadPot(el.dataset.i, !!el.dataset.share); break;
+    case 'stake-dl': downloadStake(el.dataset.part); break;
+    case 'cutting-add': cuttingForm(); break;
+    case 'cutting-from': cuttingForm(id); break;
+    case 'cut-water': case 'cut-roots': case 'cut-pot': case 'cut-del': cuttingAction(a, id); break;
+    case 'ics': exportICS(); break;
+    case 'room-add': roomForm(null); break;
+    case 'room-edit': roomForm(Number(el.dataset.i)); break;
+    case 'room-del': { const rooms = getRooms(); if(confirm(`Supprimer « ${rooms[+el.dataset.i].name} » ?`)){ rooms.splice(+el.dataset.i, 1); setRooms(rooms); closeSheet(); renderRooms(); renderPlants(); } break; }
+    case 'species-info': speciesInfo(el.dataset.g); break;
     case 'close-sheet': closeSheet(); break;
     case 'save-key': ls.set('verdure.key', $('#api-key').value.trim()); toast('Clé enregistrée'); break;
     case 'toggle-key': { const i = $('#api-key'); i.type = i.type === 'password' ? 'text' : 'password'; el.textContent = i.type === 'password' ? 'Afficher' : 'Masquer'; break; }
+    case 'wx-save': ls.set('verdure.lat', $('#wx-lat').value); ls.set('verdure.lon', $('#wx-lon').value); toast('Position enregistrée'); loadWeather(true); break;
+    case 'wx-geo':
+      if(!navigator.geolocation){ toast('Géolocalisation indisponible'); break; }
+      navigator.geolocation.getCurrentPosition(pos => { $('#wx-lat').value = pos.coords.latitude.toFixed(4); $('#wx-lon').value = pos.coords.longitude.toFixed(4);
+        ls.set('verdure.lat', $('#wx-lat').value); ls.set('verdure.lon', $('#wx-lon').value); toast('Position enregistrée'); loadWeather(true); },
+        () => toast('Position refusée'), {timeout:10000});
+      break;
     case 'export': exportData(); break;
     case 'reset':
-      if(confirm('Effacer toutes les plantes ? Cette action est définitive.')){ await DB.clear(); await reload(); toast('Tout est effacé'); }
+      if(confirm('Effacer plantes, photos, boutures et pièces ? Cette action est définitive.')){
+        for(const s of ['plants','photos','cuttings']) await DB.clear(s); setRooms([]); await reload(); toast('Tout est effacé'); }
       break;
   }
 });
 document.addEventListener('change', e => {
-  if(e.target.matches('#in-camera, #in-gallery')){ addShots([...e.target.files]); e.target.value = ''; }
-  else if(e.target.matches('select.organ')) SHOTS[+e.target.dataset.i].organ = e.target.value;
-  else if(e.target.matches('#in-import') && e.target.files[0]){ importData(e.target.files[0]); e.target.value = ''; }
+  const t = e.target;
+  if(t.matches('#in-camera, #in-gallery')){ addShots([...t.files]); t.value = ''; }
+  else if(t.matches('select.organ')) SHOTS[+t.dataset.i].organ = t.value;
+  else if(t.matches('#in-import') && t.files[0]){ importData(t.files[0]); t.value = ''; }
+  else if(t.matches('[data-journal]') && t.files[0]){ addJournalPhoto(t.dataset.journal, t.files[0]); t.value = ''; }
+  else if(t.matches('#pp-plant')){ potDefaults({plantId:t.value}); updatePot(); }
+  else if(t.matches('#sg-light, #sg-effort, #sg-pet, #sg-dry')) renderSuggest();
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if(t.closest('#pot-form') && t.id !== 'pp-plant'){ clearTimeout(potTimer); potTimer = setTimeout(updatePot, 60); }
+  else if(t.closest('#stake-form')){ clearTimeout(potTimer); potTimer = setTimeout(updateStake, 120); }
+  else if(t.closest('#room-form')) updateRoomEstimate();
+  else if(t.matches('.compare-range')) t.closest('.card').querySelector('.compare').style.setProperty('--pos', t.value + '%');
 });
 document.addEventListener('submit', e => {
-  e.preventDefault();
-  if(e.target.id === 'plant-form') savePlantForm(e.target);
-  else if(e.target.id === 'manual-form') saveManual(e.target);
+  e.preventDefault(); const f = e.target;
+  if(f.id === 'plant-form') savePlantForm(f);
+  else if(f.id === 'manual-form') saveManual(f);
+  else if(f.id === 'cutting-form') saveCutting(f);
+  else if(f.id === 'room-form') saveRoom(f);
 });
-$('#sheet').addEventListener('click', e => { if(e.target === $('#sheet')) closeSheet(); }); // clic sur le fond
-document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderWater(); renderPlants(); } });
+$('#sheet').addEventListener('click', e => { if(e.target === $('#sheet')) closeSheet(); });
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderWater(); renderPlants(); loadWeather(); } });
+window.addEventListener('resize', () => { if(AVIEW === 'pot' && $('#tab-atelier').classList.contains('active')) updatePotView(); });
 
 /* =========================================================
-   13. DÉMARRAGE
+   18. DÉMARRAGE
    ========================================================= */
 (async function init(){
   $('#api-key').value = getKey();
-  showQuota(); renderShots();
+  const {lat, lon} = wxPos(); $('#wx-lat').value = lat; $('#wx-lon').value = lon;
+  $('#ics-hour').value = ls.get('verdure.icshour', '09:00');
+  $('#st-url').value = location.origin + location.pathname;
+  showQuota(); setMode('identify'); initDrag($('#pot-canvas'));
   await DB.open(); await reload();
-  if(!getKey()) toast('Commence par ajouter ta clé PlantNet dans Réglages');
+  loadWeather();
+  // Lien depuis un tuteur QR : ?p=<code>&g=<genre>&n=<nom>
+  const qs = new URLSearchParams(location.search);
+  if(qs.get('p')){
+    const p = PLANTS.find(x => x.id.startsWith(qs.get('p')));
+    history.replaceState(null, '', location.pathname);
+    if(p){ showTab('plants'); openPlant(p.id); } else openGuest(qs.get('n'), qs.get('g'));
+  } else if(!getKey()) toast('Commence par ajouter ta clé PlantNet (⚙️)');
   if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 </script>
