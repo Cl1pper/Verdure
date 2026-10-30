@@ -417,7 +417,7 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
 
     <div class="card">
       <h3>⚠️ Réinitialiser</h3>
-      <p class="small muted">Supprime plantes, photos, boutures et pièces (la clé API est conservée).</p>
+      <p class="small muted">Supprime plantes, photos, mesures, boutures et pièces (la clé API est conservée).</p>
       <button class="btn danger" data-action="reset">Tout effacer</button>
     </div>
     <p class="small muted">Identification et diagnostic : Pl@ntNet (Cirad, INRAE, Inria, IRD). Météo : Open-Meteo. Fiches d'entretien indicatives, par genre ou famille.</p>
@@ -558,6 +558,17 @@ const POTS = {
   standard:{t:'Pot avec soucoupe',d:'Pot classique avec soucoupe.',q:'planter with saucer',type:'saucer',hole:12}
 };
 const BED = {x:250, y:250, z:260}; // Anycubic Kobra 3 (mm)
+
+// Mesures du sol : plages idéales
+const PH = {goeppertia:[5.5,6.5], calathea:[5.5,6.5], maranta:[5.5,6.5], phalaenopsis:[5.5,6.5], anthurium:[5.5,6.5], nephrolepis:[5,6.5],
+  asplenium:[5,6.5], fittonia:[5.5,6.5], spathiphyllum:[5.5,6.5], alocasia:[5.5,6.5], coffea:[5,6.5], citrus:[6,7], olea:[6.5,8],
+  lavandula:[6.5,8], thymus:[6.5,8], salvia:[6,7.5], rosmarinus:[6,7.5], aloe:[6,7.5], echeveria:[6,7], crassula:[6,7.5], yucca:[6,7.5],
+  beaucarnea:[6,7.5], solanum:[6,6.8], capsicum:[6,6.8], ocimum:[6,7.5], mentha:[6,7.5], rosa:[6,7], pelargonium:[6,7], hedera:[6,7.5]};
+const PH_FAMILY = {cactaceae:[6,7.5], orchidaceae:[5.5,6.5], marantaceae:[5.5,6.5], nephrolepidaceae:[5,6.5], polypodiaceae:[5,6.5], aspleniaceae:[5,6.5], pteridaceae:[5.5,7]};
+const MOIST = {faible:{ok:[10,40], dry:15}, moyenne:{ok:[30,60], dry:30}, 'élevée':{ok:[45,80], dry:45}}; // % d'humidité du sol
+const LUX = {tolerante:[300,2500], 'mi-ombre':[1000,5000], indirecte:[2500,10000], vive:[5000,20000], soleil:[15000,100000]};
+const AIR = {faible:[20,100], moyenne:[40,70], 'élevée':[55,100]};
+const FERT = {low:'Faible', ok:'Correcte', high:'Élevée'};
 
 /* =========================================================
    2. UTILITAIRES
@@ -793,14 +804,15 @@ function designStake({matrix, qrW, textRuns=[], textW=0, textH=0, thick=2.4, rel
    ========================================================= */
 const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 const DB = {
-  db:null, mem:{plants:new Map(), photos:new Map(), cuttings:new Map()},
+  db:null, mem:{plants:new Map(), photos:new Map(), cuttings:new Map(), readings:new Map()},
   async open(){
     try{
       this.db = await new Promise((res, rej) => {
-        const r = indexedDB.open('verdure', 2);
+        const r = indexedDB.open('verdure', 3);
         r.onupgradeneeded = () => { const db = r.result;
           if(!db.objectStoreNames.contains('plants')) db.createObjectStore('plants', {keyPath:'id'});
           if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', {keyPath:'id'}).createIndex('plant', 'plantId');
+          if(!db.objectStoreNames.contains('readings')) db.createObjectStore('readings', {keyPath:'id'}).createIndex('plant', 'plantId');
           if(!db.objectStoreNames.contains('cuttings')) db.createObjectStore('cuttings', {keyPath:'id'}); };
         r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
       });
@@ -811,10 +823,12 @@ const DB = {
   async put(s, o){ if(this.db) await req(this.store(s,'readwrite').put(o)); else this.mem[s].set(o.id, o); },
   async del(s, id){ if(this.db) await req(this.store(s,'readwrite').delete(id)); else this.mem[s].delete(id); },
   async clear(s){ if(this.db) await req(this.store(s,'readwrite').clear()); else this.mem[s].clear(); },
-  async photosOf(plantId){
-    const list = this.db ? await req(this.store('photos','readonly').index('plant').getAll(plantId)) : [...this.mem.photos.values()].filter(p => p.plantId === plantId);
+  async ofPlant(s, plantId){
+    const list = this.db ? await req(this.store(s,'readonly').index('plant').getAll(plantId)) : [...this.mem[s].values()].filter(p => p.plantId === plantId);
     return list.sort((a,b) => a.date - b.date);
-  }
+  },
+  photosOf(plantId){ return this.ofPlant('photos', plantId); },
+  readingsOf(plantId){ return this.ofPlant('readings', plantId); }
 };
 let PLANTS = [], CUTTINGS = [];
 async function reload(){
@@ -1111,7 +1125,7 @@ function roomDatalist(){ return `<datalist id="rooms-list">${getRooms().map(r =>
 
 async function openPlant(id){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  const c = getCare(p.genus, p.family), w = waterInfo(p), photos = await DB.photosOf(id);
+  const c = getCare(p.genus, p.family), w = waterInfo(p), photos = await DB.photosOf(id), readings = await DB.readingsOf(id);
   const first = photos[0], latest = photos[photos.length-1];
   openSheet(p.name, `
     ${p.photo ? `<img class="hero" src="${p.photo}" alt="${esc(p.name)}">` : ''}
@@ -1121,6 +1135,8 @@ async function openPlant(id){
       ${w.rain ? '<p class="small muted">🌧️ La pluie récente compte comme un arrosage.</p>' : ''}
       <div class="row"><button class="btn" data-action="water" data-id="${p.id}">💧 Arrosée</button>
       <button class="btn ghost" data-action="diagnose-plant" data-id="${p.id}">🩺 Diagnostic</button></div></div>
+
+    ${soilHTML(p, readings)}
 
     <div class="card"><h3>📸 Journal <span class="small muted">(${photos.length} photo${photos.length > 1 ? 's' : ''})</span></h3>
       ${photoDue(p) ? '<p class="info-box">C’est le moment de la photo du mois : même angle, même endroit, pour bien voir l’évolution.</p>' : ''}
@@ -1198,6 +1214,105 @@ async function saveManual(form){
   await DB.put('plants', p);
   if(big) await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big});
   await reload(); toast('Plante ajoutée 🌱'); openPlant(p.id);
+}
+
+/* =========================================================
+   11b. MESURES DU SOL (testeur humidité / pH / fertilité…)
+   ========================================================= */
+const moistScale = () => ls.get('verdure.moistScale', 'pct'); // 'pct' (0–100 %) ou '10' (1–10)
+const fmtMoist = v => moistScale() === '10' ? `${fr(v/10)}/10` : `${fr(v,0)} %`;
+function ideals(p){
+  const c = getCare(p.genus, p.family), g = (p.genus||'').toLowerCase(), f = (p.family||'').toLowerCase();
+  return {c, ph:PH[g] || PH_FAMILY[f] || [6,7], moist:MOIST[c.hum] || MOIST.moyenne, lux:LUX[c.light] || LUX.indirecte, air:AIR[c.hum] || AIR.moyenne, tmin:minTemp(p)};
+}
+// Analyse d'une mesure : une ligne par valeur renseignée, avec verdict et conseil
+function analyzeReading(p, r){
+  const I = ideals(p), out = [];
+  if(r.moist != null){ const [lo, hi] = I.moist.ok, v = r.moist;
+    if(v < I.moist.dry) out.push({k:'moist', icon:'💧', label:'Humidité du sol', val:fmtMoist(v), cls:'late', msg:'Sec : arrose maintenant, jusqu’à ce que l’eau ressorte par le trou.', act:'dry'});
+    else if(v < lo) out.push({k:'moist', icon:'💧', label:'Humidité du sol', val:fmtMoist(v), cls:'soon', msg:'Commence à sécher : arrosage à prévoir d’ici 1 à 2 jours.'});
+    else if(v <= hi) out.push({k:'moist', icon:'💧', label:'Humidité du sol', val:fmtMoist(v), cls:'ok', msg:'Parfait, pas besoin d’arroser.', act:'wet'});
+    else if(v <= hi + 15) out.push({k:'moist', icon:'💧', label:'Humidité du sol', val:fmtMoist(v), cls:'due', msg:'Plutôt humide : attends avant le prochain arrosage.', act:'wet'});
+    else out.push({k:'moist', icon:'💧', label:'Humidité du sol', val:fmtMoist(v), cls:'late', msg:'Détrempé : risque de pourriture des racines. Vide la soucoupe, n’arrose plus jusqu’à ce que ça sèche, vérifie le drainage.', act:'wet'}); }
+  if(r.ph != null){ const [lo, hi] = I.ph, v = r.ph, val = fr(v);
+    if(v < lo - 0.5) out.push({k:'ph', icon:'🧪', label:'pH', val, cls:'late', msg:`Trop acide (idéal ${fr(lo)}–${fr(hi)}). Pour remonter : une pincée de dolomie ou de chaux agricole en surface, arrose à l’eau du robinet (calcaire). Si le terreau est vieux, rempote en terreau neuf.`});
+    else if(v < lo) out.push({k:'ph', icon:'🧪', label:'pH', val, cls:'soon', msg:`Un peu acide (idéal ${fr(lo)}–${fr(hi)}) : arrose à l’eau du robinet, ça remonte doucement.`});
+    else if(v <= hi) out.push({k:'ph', icon:'🧪', label:'pH', val, cls:'ok', msg:`Dans la bonne zone (${fr(lo)}–${fr(hi)}).`});
+    else if(v <= hi + 0.5) out.push({k:'ph', icon:'🧪', label:'pH', val, cls:'soon', msg:`Un peu basique (idéal ${fr(lo)}–${fr(hi)}) : arrose à l’eau de pluie ou filtrée plutôt qu’au robinet.`});
+    else out.push({k:'ph', icon:'🧪', label:'pH', val, cls:'late', msg:`Trop basique (idéal ${fr(lo)}–${fr(hi)}). Pour baisser : eau de pluie ou filtrée, ajoute du terreau de bruyère au prochain rempotage, ou un peu de soufre (ou engrais acidifiant) en suivant la dose.`}); }
+  if(r.fert){ const winter = isWinter();
+    out.push(r.fert === 'low' ? {k:'fert', icon:'🌾', label:'Fertilité', val:FERT.low, cls:winter ? 'soon' : 'due', msg:winter ? 'Pauvre, mais en hiver la plante se repose : attends mars pour l’engrais.' : 'Pauvre : donne de l’engrais liquide dilué toutes les 2 à 4 semaines.'}
+      : r.fert === 'high' ? {k:'fert', icon:'🌾', label:'Fertilité', val:FERT.high, cls:'due', msg:'Trop d’engrais : arrête-le, et rince le substrat à grande eau (laisse bien égoutter). Croûte blanche en surface = sels à gratter.'}
+      : {k:'fert', icon:'🌾', label:'Fertilité', val:FERT.ok, cls:'ok', msg:'Bonne réserve de nutriments.'}); }
+  if(r.temp != null){ const v = r.temp;
+    if(v < I.tmin + 3) out.push({k:'temp', icon:'🌡️', label:'Température du sol', val:`${fr(v)} °C`, cls:'late', msg:`Trop froid pour elle (supporte ~${I.tmin} °C mini) : éloigne-la de la vitre ou rentre-la, arrose moins.`});
+    else if(v > 30) out.push({k:'temp', icon:'🌡️', label:'Température du sol', val:`${fr(v)} °C`, cls:'due', msg:'Sol chaud : ombre le pot aux heures chaudes, surveille l’arrosage.'});
+    else out.push({k:'temp', icon:'🌡️', label:'Température du sol', val:`${fr(v)} °C`, cls:'ok', msg:'Température correcte.'}); }
+  if(r.lux != null){ const [lo, hi] = I.lux, v = r.lux;
+    if(v < lo*0.6) out.push({k:'lux', icon:'☀️', label:'Lumière', val:`${fr(v,0)} lux`, cls:'late', msg:`Trop sombre (idéal ${fr(lo,0)}–${fr(hi,0)} lux) : rapproche-la d’une fenêtre.`});
+    else if(v < lo) out.push({k:'lux', icon:'☀️', label:'Lumière', val:`${fr(v,0)} lux`, cls:'soon', msg:`Un peu juste (idéal ${fr(lo,0)}–${fr(hi,0)} lux).`});
+    else if(v > hi*1.5 && LVL[I.c.light] <= 2) out.push({k:'lux', icon:'☀️', label:'Lumière', val:`${fr(v,0)} lux`, cls:'due', msg:'Très lumineux : attention au soleil direct qui brûle ses feuilles.'});
+    else out.push({k:'lux', icon:'☀️', label:'Lumière', val:`${fr(v,0)} lux`, cls:'ok', msg:'Lumière adaptée.'});
+    out[out.length-1].note = 'Mesure à prendre de jour, capteur tourné vers la fenêtre.'; }
+  if(r.air != null){ const [lo, hi] = I.air, v = r.air;
+    if(v < lo) out.push({k:'air', icon:'🌫️', label:'Humidité de l’air', val:`${fr(v,0)} %`, cls:v < lo - 15 ? 'late' : 'soon', msg:'Air trop sec : regroupe les plantes, pose le pot sur une soucoupe de billes d’argile mouillées, ou un humidificateur.'});
+    else if(v > hi + 10) out.push({k:'air', icon:'🌫️', label:'Humidité de l’air', val:`${fr(v,0)} %`, cls:'soon', msg:'Air très humide : aère la pièce pour éviter les moisissures.'});
+    else out.push({k:'air', icon:'🌫️', label:'Humidité de l’air', val:`${fr(v,0)} %`, cls:'ok', msg:'Humidité de l’air correcte.'}); }
+  return out;
+}
+function spark(vals, band, min, max){
+  const W = 300, H = 50, x = i => vals.length < 2 ? W/2 : 6 + i*(W-12)/(vals.length-1), y = v => H - 4 - (clamp(v,min,max) - min)/(max - min)*(H - 8);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Évolution" style="display:block">
+    <rect x="0" y="${y(band[1])}" width="${W}" height="${Math.max(2, y(band[0]) - y(band[1]))}" fill="var(--accent-soft)"/>
+    <polyline fill="none" stroke="var(--accent-2)" stroke-width="2.5" stroke-linejoin="round" points="${vals.map((v,i) => `${x(i)},${y(v)}`).join(' ')}"/>
+    ${vals.map((v,i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--accent)"/>`).join('')}</svg>`;
+}
+function soilHTML(p, readings){
+  const last = readings[readings.length-1], I = ideals(p);
+  let body = '';
+  if(!last) body = `<p class="small muted">Note ce que ton testeur affiche (humidité, pH, fertilité…) : tout est facultatif, l’app compare aux besoins de la plante et te dit quoi faire.</p>`;
+  else{
+    const res = analyzeReading(p, last), w = waterInfo(p);
+    const anyBad = res.some(x => x.cls !== 'ok');
+    body = `<p class="small muted">Dernière mesure : ${fmtDateY(last.date)}${Date.now() - last.date > 14*DAY ? ' · pense à refaire une mesure' : ''}</p>
+      ${!anyBad ? '<p class="tip">✅ Tout est bon, rien à faire.</p>' : ''}
+      <ul class="facts">${res.map(x => `<li><b>${x.icon} ${x.label}</b><span><span class="pill ${x.cls}">${esc(x.val)}</span><br>${esc(x.msg)}${x.note ? `<br><span class="small muted">${esc(x.note)}</span>` : ''}</span></li>`).join('')}</ul>
+      ${res.some(x => x.act === 'dry') ? `<button class="btn block" data-action="water" data-id="${p.id}" style="margin-top:8px">💧 Arrosée</button>` : ''}
+      ${res.some(x => x.act === 'wet') && (w.cls === 'late' || w.cls === 'due') && p.lastWatered ? `<button class="btn ghost block" data-action="postpone" data-id="${p.id}" style="margin-top:8px">Terre encore humide : reporter l’arrosage de 2 j</button>` : ''}`;
+    const m = readings.filter(r => r.moist != null), ph = readings.filter(r => r.ph != null);
+    if(m.length >= 2) body += `<p class="small" style="margin:12px 0 2px"><b>Humidité</b> <span class="muted">(bande verte = idéal)</span></p>${spark(m.slice(-12).map(r => r.moist), I.moist.ok, 0, 100)}`;
+    if(ph.length >= 2) body += `<p class="small" style="margin:10px 0 2px"><b>pH</b></p>${spark(ph.slice(-12).map(r => r.ph), I.ph, 4, 8.5)}`;
+    body += `<details><summary>Historique (${readings.length})</summary><ul class="facts small">${readings.slice().reverse().slice(0,15).map(r => `<li><b>${fmtDate(r.date)}</b><span style="flex:1">${[
+      r.moist != null && `💧 ${fmtMoist(r.moist)}`, r.ph != null && `pH ${fr(r.ph)}`, r.fert && `🌾 ${FERT[r.fert]}`, r.temp != null && `${fr(r.temp)} °C`,
+      r.lux != null && `${fr(r.lux,0)} lux`, r.air != null && `air ${fr(r.air,0)} %`].filter(Boolean).join(' · ')}</span>
+      <button class="btn sm danger" data-action="reading-del" data-id="${r.id}" data-plant="${p.id}" aria-label="Supprimer la mesure du ${fmtDate(r.date)}" style="flex:none;padding:2px 9px">✕</button></li>`).join('')}</ul></details>`;
+  }
+  return `<div class="card"><h3>🧪 Sol & mesures</h3>${body}
+    <button class="btn ghost block" data-action="reading-add" data-id="${p.id}" style="margin-top:10px">＋ Nouvelle mesure</button></div>`;
+}
+function readingForm(plantId){
+  const p = PLANTS.find(x => x.id === plantId); if(!p) return;
+  const pct = moistScale() !== '10';
+  openSheet(`Mesure : ${p.name}`, `<form id="reading-form" class="card" data-id="${p.id}">
+    <p class="small muted" style="margin-top:0">Remplis seulement ce que ton appareil affiche. Plante la sonde aux 2/3 de la profondeur du pot, à mi-chemin entre la tige et le bord, et essuie-la après.</p>
+    <div class="grid2">
+      <label class="field"><span>💧 Humidité du sol (${pct ? '%' : '1–10'})</span><input name="moist" type="number" inputmode="decimal" min="0" max="${pct ? 100 : 10}" step="${pct ? 1 : 0.5}"></label>
+      <label class="field"><span>🧪 pH</span><input name="ph" type="number" inputmode="decimal" min="3" max="9" step="0.1"></label>
+      <label class="field"><span>🌾 Fertilité</span><select name="fert"><option value="">—</option><option value="low">Faible</option><option value="ok">Correcte</option><option value="high">Élevée</option></select></label>
+      <label class="field"><span>🌡️ Temp. du sol (°C)</span><input name="temp" type="number" inputmode="decimal" min="-10" max="50" step="0.1"></label>
+      <label class="field"><span>☀️ Lumière (lux)</span><input name="lux" type="number" inputmode="numeric" min="0" max="150000" step="1"></label>
+      <label class="field"><span>🌫️ Humidité de l’air (%)</span><input name="air" type="number" inputmode="numeric" min="0" max="100" step="1"></label>
+    </div>
+    <label class="field"><span>Échelle d’humidité de ton testeur</span><select name="scale"><option value="pct"${pct ? ' selected' : ''}>Pourcentage (0–100 %)</option><option value="10"${pct ? '' : ' selected'}>Aiguille ou chiffre de 1 à 10</option></select></label>
+    <button class="btn block" type="submit">Analyser et enregistrer</button></form>`);
+}
+async function saveReading(form){
+  const f = new FormData(form), num = k => { const v = f.get(k); return v === '' || v == null ? null : Number(String(v).replace(',', '.')); };
+  if(f.get('scale') !== moistScale()){ ls.set('verdure.moistScale', f.get('scale')); readingForm(form.dataset.id); toast('Échelle changée, saisis à nouveau'); return; }
+  let moist = num('moist'); if(moist != null && moistScale() === '10') moist *= 10;
+  const r = {id:uid(), plantId:form.dataset.id, date:Date.now(), moist, ph:num('ph'), fert:f.get('fert') || null, temp:num('temp'), lux:num('lux'), air:num('air')};
+  if([r.moist, r.ph, r.fert, r.temp, r.lux, r.air].every(v => v == null)){ toast('Renseigne au moins une valeur'); return; }
+  await DB.put('readings', r); toast('Mesure enregistrée 🧪'); openPlant(r.plantId);
 }
 
 /* =========================================================
@@ -1623,8 +1738,8 @@ function openSheet(title, html){
 }
 const closeSheet = () => { if($('#sheet').open) $('#sheet').close(); };
 async function exportData(){
-  const photos = await DB.all('photos');
-  const data = {app:'verdure', v:2, date:new Date().toISOString(), plants:PLANTS, cuttings:CUTTINGS, photos,
+  const photos = await DB.all('photos'), readings = await DB.all('readings');
+  const data = {app:'verdure', v:3, date:new Date().toISOString(), plants:PLANTS, cuttings:CUTTINGS, photos, readings, moistScale:moistScale(),
     rooms:getRooms(), settings:{lat:ls.get('verdure.lat'), lon:ls.get('verdure.lon')}};
   saveFile(new Blob([JSON.stringify(data)], {type:'application/json'}), `verdure-${localISO(Date.now())}.json`);
 }
@@ -1635,6 +1750,8 @@ async function importData(file){
     for(const p of data.plants) if(p && p.id && p.name) await DB.put('plants', p);
     for(const c of data.cuttings || []) if(c && c.id) await DB.put('cuttings', c);
     for(const ph of data.photos || []) if(ph && ph.id && ph.plantId) await DB.put('photos', ph);
+    for(const r of data.readings || []) if(r && r.id && r.plantId) await DB.put('readings', r);
+    if(data.moistScale) ls.set('verdure.moistScale', data.moistScale);
     if(Array.isArray(data.rooms) && data.rooms.length){ const cur = getRooms(); for(const r of data.rooms) if(!cur.some(x => x.name === r.name)) cur.push(r); setRooms(cur); }
     if(data.settings?.lat){ ls.set('verdure.lat', data.settings.lat); ls.set('verdure.lon', data.settings.lon); }
     await reload(); toast(`${data.plants.length} plante(s) importée(s)`);
@@ -1665,6 +1782,8 @@ document.addEventListener('click', async e => {
     case 'photo': openPhoto(id, el.dataset.plant); break;
     case 'photo-del': if(confirm('Supprimer cette photo ?')){ await DB.del('photos', id); openPlant(el.dataset.plant); } break;
     case 'water': water(id); break;
+    case 'reading-add': readingForm(id); break;
+    case 'reading-del': if(confirm('Supprimer cette mesure ?')){ await DB.del('readings', id); openPlant(el.dataset.plant); } break;
     case 'unwater': unwater(id); break;
     case 'postpone': postpone(id); break;
     case 'manual-add': manualAdd(); break;
@@ -1679,6 +1798,7 @@ document.addEventListener('click', async e => {
       const p = PLANTS.find(x => x.id === id);
       if(p && confirm(`Supprimer ${p.name} et ses photos ?`)){
         for(const ph of await DB.photosOf(id)) await DB.del('photos', ph.id);
+        for(const r of await DB.readingsOf(id)) await DB.del('readings', r.id);
         await DB.del('plants', id); await reload(); closeSheet(); toast('Supprimée'); }
       break; }
     case 'gen-pot': closeSheet(); showTab('atelier'); setAView('pot'); potDefaults({plantId:id, genus:el.dataset.g}); updatePot(); break;
@@ -1706,7 +1826,7 @@ document.addEventListener('click', async e => {
     case 'export': exportData(); break;
     case 'reset':
       if(confirm('Effacer plantes, photos, boutures et pièces ? Cette action est définitive.')){
-        for(const s of ['plants','photos','cuttings']) await DB.clear(s); setRooms([]); await reload(); toast('Tout est effacé'); }
+        for(const s of ['plants','photos','cuttings','readings']) await DB.clear(s); setRooms([]); await reload(); toast('Tout est effacé'); }
       break;
   }
 });
@@ -1732,6 +1852,7 @@ document.addEventListener('submit', e => {
   else if(f.id === 'manual-form') saveManual(f);
   else if(f.id === 'cutting-form') saveCutting(f);
   else if(f.id === 'room-form') saveRoom(f);
+  else if(f.id === 'reading-form') saveReading(f);
 });
 $('#sheet').addEventListener('click', e => { if(e.target === $('#sheet')) closeSheet(); });
 document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderWater(); renderPlants(); loadWeather(); } });
