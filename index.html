@@ -426,7 +426,7 @@ ol.steps{padding-left:20px} ol.steps li{margin-bottom:6px}
 
 <nav class="tabbar" role="tablist" aria-label="Navigation">
   <button id="t-scan" role="tab" aria-selected="true" aria-controls="tab-scan" data-action="tab" data-tab="scan"><span class="ico" aria-hidden="true">📷</span>Scanner</button>
-  <button id="t-plants" role="tab" aria-selected="false" aria-controls="tab-plants" data-action="tab" data-tab="plants"><span class="ico" aria-hidden="true">🪴</span>Plantes</button>
+  <button id="t-plants" role="tab" aria-selected="false" aria-controls="tab-plants" data-action="tab" data-tab="plants"><span class="ico" aria-hidden="true">🪴</span>Plantes<span class="badge" id="plants-badge" hidden></span></button>
   <button id="t-water" role="tab" aria-selected="false" aria-controls="tab-water" data-action="tab" data-tab="water"><span class="ico" aria-hidden="true">💧</span>Arrosage<span class="badge" id="water-badge" hidden></span></button>
   <button id="t-atelier" role="tab" aria-selected="false" aria-controls="tab-atelier" data-action="tab" data-tab="atelier"><span class="ico" aria-hidden="true">🖨️</span>Atelier</button>
   <button id="t-home" role="tab" aria-selected="false" aria-controls="tab-home" data-action="tab" data-tab="home"><span class="ico" aria-hidden="true">🏠</span>Maison</button>
@@ -569,6 +569,13 @@ const MOIST = {faible:{ok:[10,40], dry:15}, moyenne:{ok:[30,60], dry:30}, 'élev
 const LUX = {tolerante:[300,2500], 'mi-ombre':[1000,5000], indirecte:[2500,10000], vive:[5000,20000], soleil:[15000,100000]};
 const AIR = {faible:[20,100], moyenne:[40,70], 'élevée':[55,100]};
 const FERT = {low:'Faible', ok:'Correcte', high:'Élevée'};
+
+// Bilan visuel : ce que l'utilisateur observe
+const SIGNS = {
+  flower:{i:'🌸', l:'En fleurs'}, growth:{i:'🌱', l:'Nouvelle pousse'}, wilt:{i:'🥀', l:'Affaissée, molle'},
+  dry:{i:'🍂', l:'Bords secs ou grillés'}, yellow:{i:'💛', l:'Feuilles jaunes'}, leggy:{i:'🌿', l:'Pâle, tiges qui s’allongent'},
+  spots:{i:'🟤', l:'Taches ou insectes'}, drop:{i:'🍃', l:'Perd ses feuilles'}
+};
 
 /* =========================================================
    2. UTILITAIRES
@@ -1139,18 +1146,23 @@ const thumb = p => p.photo ? `<img src="${p.photo}" alt="">` : `<span class="ph"
 function renderPlants(){
   const box = $('#plants');
   if(!PLANTS.length){ box.innerHTML = `<div class="empty">Aucune plante. Scanne-en une ou ajoute-la à la main.</div>`; return; }
-  box.innerHTML = `<div class="plants">${PLANTS.map(p => { const w = waterInfo(p), room = roomOf(p), fit = room ? lightFit(getCare(p.genus,p.family).light, room.level) : null; return `
-    <button class="pcard" data-action="plant" data-id="${p.id}" aria-label="${esc(p.name)}, arrosage : ${w.label}">
+  const watch = PLANTS.map(p => ({p, a:problemAlerts(p)})).filter(x => x.a.length);
+  const pb = $('#plants-badge'); pb.hidden = !watch.length; pb.textContent = watch.length;
+  box.innerHTML = (watch.length ? `<div class="card" style="border-color:var(--due)"><h3>👀 À surveiller (${watch.length})</h3>${watch.map(({p,a}) =>
+      `<button class="wrow" data-action="plant" data-id="${p.id}" style="width:100%;border:0;background:none;padding:6px 0;cursor:pointer;text-align:left;color:inherit">
+        ${thumb(p)}<span class="info"><b>${esc(p.name)}</b><br>${a.map(x => `<span class="pill ${x.cls}">${x.i} ${x.l}</span>`).join(' ')}</span></button>`).join('')}</div>` : '') +
+  `<div class="plants">${PLANTS.map(p => { const w = waterInfo(p), alerts = plantAlerts(p).filter(a => a.k !== 'water'); return `
+    <button class="pcard" data-action="plant" data-id="${p.id}" aria-label="${esc(p.name)}, arrosage : ${w.label}${alerts.length ? ', ' + alerts.map(a => a.l).join(', ') : ''}">
       ${thumb(p)}<div class="body"><div class="name">${esc(p.name)}</div>
       <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.room || p.sci || '')}${p.outdoor ? ' · extérieur' : ''}</div>
       <span class="pill ${w.cls}">💧 ${w.label}</span>
+      ${alerts.map(a => `<span class="pill ${a.cls}" title="${a.l}">${a.i} ${a.l}</span>`).join('')}
       ${photoDue(p) ? '<span class="pill info">📸 photo du mois</span>' : ''}
-      ${fit && fit.cls !== 'ok' ? `<span class="pill ${fit.cls}">☀️ mal placée</span>` : ''}
       </div></button>`; }).join('')}</div>`;
 }
 function roomDatalist(){ return `<datalist id="rooms-list">${getRooms().map(r => `<option value="${esc(r.name)}">`).join('')}</datalist>`; }
 
-async function openPlant(id){
+async function openPlant(id, advice){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
   const c = getCare(p.genus, p.family), w = waterInfo(p), photos = await DB.photosOf(id), readings = await DB.readingsOf(id);
   const first = photos[0], latest = photos[photos.length-1];
@@ -1163,6 +1175,7 @@ async function openPlant(id){
       <div class="row"><button class="btn" data-action="water" data-id="${p.id}">💧 Arrosée</button>
       <button class="btn ghost" data-action="diagnose-plant" data-id="${p.id}">🩺 Diagnostic</button></div></div>
 
+    ${moodHTML(p, advice)}
     ${soilHTML(p, readings)}
 
     <div class="card"><h3>📸 Journal <span class="small muted">(${photos.length} photo${photos.length > 1 ? 's' : ''})</span></h3>
@@ -1241,6 +1254,67 @@ async function saveManual(form){
   await DB.put('plants', p);
   if(big) await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big});
   await reload(); toast('Plante ajoutée 🌱'); openPlant(p.id);
+}
+
+/* =========================================================
+   11a. BILAN VISUEL & ALERTES
+   ========================================================= */
+const recentSign = (p, s, days) => (p.signs || []).some(x => x.s === s && Date.now() - x.date < days*DAY);
+const recentlyWatered = (p, days=3) => p.lastWatered && Date.now() - p.lastWatered < days*DAY;
+const freshReading = p => p.lastReading && Date.now() - p.lastReading.date < 7*DAY ? p.lastReading : null;
+// Alertes calculées à partir de l'arrosage, de la pièce, des mesures et du bilan visuel
+function plantAlerts(p){
+  const a = [], w = waterInfo(p), I = ideals(p), r = freshReading(p), room = roomOf(p), fit = room ? lightFit(I.c.light, room.level) : null;
+  if(p.flowering) a.push({k:'flower', i:'🌸', l:'En fleurs', cls:'ok'});
+  const wiltDry = recentSign(p,'wilt',3) && !recentlyWatered(p), wiltWet = recentSign(p,'wilt',3) && recentlyWatered(p);
+  if((w.cls === 'late' && w.days <= -2) || (r?.moist != null && r.moist < I.moist.dry) || wiltDry) a.push({k:'water', i:'💧', l:'Manque d’eau', cls:'late'});
+  if((r?.moist != null && r.moist > I.moist.ok[1] + 15) || wiltWet || (recentSign(p,'yellow',7) && r?.moist != null && r.moist > I.moist.ok[1])) a.push({k:'wet', i:'🌊', l:'Trop d’eau', cls:'late'});
+  if((fit && fit.cls === 'late') || (r?.lux != null && r.lux < I.lux[0]*0.6) || recentSign(p,'leggy',21)) a.push({k:'light', i:'☀️', l:'Manque de lumière', cls:'due'});
+  else if(fit && fit.cls === 'due') a.push({k:'sun', i:'🔥', l:'Trop de soleil', cls:'due'});
+  if(recentSign(p,'dry',14) || (r?.air != null && r.air < I.air[0] - 15)) a.push({k:'dry', i:'🍂', l:'Se dessèche', cls:'due'});
+  if(recentSign(p,'spots',14)) a.push({k:'spots', i:'🟤', l:'Taches à surveiller', cls:'due'});
+  if(recentSign(p,'drop',14)) a.push({k:'drop', i:'🍃', l:'Perd ses feuilles', cls:'due'});
+  return a;
+}
+const problemAlerts = p => plantAlerts(p).filter(x => x.cls !== 'ok');
+// Conseil selon ce qu'on observe, en tenant compte du contexte
+function signAdvice(p, s){
+  const I = ideals(p), r = freshReading(p), room = roomOf(p), w = waterInfo(p), wet = recentlyWatered(p) || (r?.moist != null && r.moist > I.moist.ok[1]);
+  const lightTxt = room ? `${room.name} est noté « ${ROOM_LVL[room.level].slice(3)} », elle veut : ${LIGHT[I.c.light].slice(3)}.` : 'Renseigne sa pièce (onglet Maison) pour vérifier la lumière.';
+  switch(s){
+    case 'flower': return `🌸 Bravo ! Pendant la floraison : ne la déplace pas, garde un arrosage régulier, retire les fleurs fanées. ${I.c.name.includes('Orchidée') ? 'Quand la hampe sèche, coupe-la au-dessus du 2ᵉ nœud pour une possible remontée.' : 'Un engrais pour plantes fleuries toutes les 2 semaines prolonge la floraison (sauf en hiver).'}`;
+    case 'growth': return '🌱 Excellent signe : elle est bien installée. C’est le bon moment pour un peu d’engrais (hors hiver) et pour la tourner d’un quart de tour.';
+    case 'wilt': return wet
+      ? '🥀 Elle a été arrosée récemment ou la terre est humide : c’est probablement un excès d’eau (racines asphyxiées). Vide la soucoupe, laisse sécher, vérifie que le trou de drainage n’est pas bouché. Si les racines sont brunes et molles, rempote dans un terreau sec.'
+      : '🥀 La terre est sans doute sèche : c’est la soif. Arrose franchement (jusqu’à ce que l’eau ressorte), elle devrait se redresser en quelques heures.';
+    case 'dry': return `🍂 Causes possibles : ${[I.c.hum === 'élevée' ? 'air trop sec (elle aime l’humidité : regroupe-la avec d’autres, billes d’argile mouillées)' : 'air sec près d’un radiateur', 'eau trop calcaire (utilise de l’eau de pluie ou reposée)', room?.level === 4 && LVL[I.c.light] <= 2 ? 'soleil direct qui brûle (éloigne-la de la vitre)' : null, w.cls === 'late' ? 'manque d’eau (arrosage en retard)' : null].filter(Boolean).join(' ; ')}. Coupe les parties sèches avec des ciseaux propres.`;
+    case 'yellow': return wet
+      ? '💛 Avec une terre humide, des feuilles jaunes signent souvent trop d’eau : espace les arrosages et vérifie le drainage. Une seule vieille feuille du bas qui jaunit, c’est normal.'
+      : `💛 Si ce sont les vieilles feuilles du bas, c’est normal. Si c’est généralisé : ${r?.fert === 'low' ? 'ta mesure indique un sol pauvre, donne de l’engrais (hors hiver)' : 'manque de nutriments possible (engrais au printemps) ou manque de lumière'}.`;
+    case 'leggy': return `🌿 Tiges longues et feuillage pâle = elle cherche la lumière. ${lightTxt} Rapproche-la d’une fenêtre ; tu peux pincer les tiges trop longues pour qu’elle se ramifie.`;
+    case 'spots': return '🟤 Regarde sous les feuilles (cochenilles, araignées rouges, thrips). Lance un 🩺 Diagnostic photo pour identifier la maladie ou le nuisible, et isole la plante en attendant.';
+    case 'drop': return `🍃 Souvent un stress : changement de place, courant d’air, froid ou arrosage irrégulier. ${I.c.name === 'Ficus' ? 'Le ficus est réputé pour ça : laisse-le à sa place, il repartira.' : 'Évite de la déplacer et garde un rythme d’arrosage régulier.'}`;
+  }
+  return '';
+}
+function moodHTML(p, advice){
+  const alerts = plantAlerts(p), probs = alerts.filter(a => a.cls !== 'ok');
+  return `<div class="card" id="mood-card"><h3>👀 Comment elle va ?</h3>
+    ${alerts.length ? `<div class="row" style="gap:6px;margin-bottom:8px">${alerts.map(a => `<span class="pill ${a.cls}">${a.i} ${a.l}</span>`).join('')}</div>` : '<p class="small muted">Aucune alerte. Touche ce que tu observes pour un conseil adapté.</p>'}
+    ${advice ? `<p class="tip">${esc(advice)}</p>` : ''}
+    ${p.flowering ? `<p class="small">🌸 En fleurs depuis le ${fmtDate(p.flowering)} <button class="btn sm ghost" data-action="flower-end" data-id="${p.id}">Floraison terminée</button></p>` : ''}
+    <div class="grid2">${Object.entries(SIGNS).filter(([k]) => !(k === 'flower' && p.flowering)).map(([k,v]) =>
+      `<button class="btn sm ghost" data-action="sign" data-s="${k}" data-id="${p.id}" style="justify-content:flex-start">${v.i} ${v.l}</button>`).join('')}</div>
+    ${probs.length && (p.signs || []).length ? `<button class="btn sm block" data-action="signs-clear" data-id="${p.id}" style="margin-top:8px">✅ Elle va mieux</button>` : ''}
+  </div>`;
+}
+async function addSign(id, s){
+  const p = PLANTS.find(x => x.id === id); if(!p) return;
+  p.signs = [...(p.signs || []).filter(x => Date.now() - x.date < 60*DAY), {s, date:Date.now()}].slice(-20);
+  if(s === 'flower') p.flowering = Date.now();
+  p.notes = `${p.notes ? p.notes + '\n' : ''}${fmtDate(Date.now())} : ${SIGNS[s].i} ${SIGNS[s].l}`;
+  await DB.put('plants', p); await reload(); await openPlant(id, signAdvice(p, s));
+  $('#mood-card')?.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 /* =========================================================
@@ -1339,7 +1413,9 @@ async function saveReading(form){
   let moist = num('moist'); if(moist != null && moistScale() === '10') moist *= 10;
   const r = {id:uid(), plantId:form.dataset.id, date:Date.now(), moist, ph:num('ph'), fert:f.get('fert') || null, temp:num('temp'), lux:num('lux'), air:num('air')};
   if([r.moist, r.ph, r.fert, r.temp, r.lux, r.air].every(v => v == null)){ toast('Renseigne au moins une valeur'); return; }
-  await DB.put('readings', r); toast('Mesure enregistrée 🧪'); openPlant(r.plantId);
+  await DB.put('readings', r);
+  const p = PLANTS.find(x => x.id === r.plantId); if(p){ p.lastReading = r; await DB.put('plants', p); await reload(); }
+  toast('Mesure enregistrée 🧪'); openPlant(r.plantId);
 }
 
 /* =========================================================
@@ -1810,6 +1886,9 @@ document.addEventListener('click', async e => {
     case 'photo-del': if(confirm('Supprimer cette photo ?')){ await DB.del('photos', id); openPlant(el.dataset.plant); } break;
     case 'water': water(id); break;
     case 'reading-add': readingForm(id); break;
+    case 'sign': addSign(id, el.dataset.s); break;
+    case 'flower-end': { const p = PLANTS.find(x => x.id === id); if(p){ p.flowering = null; p.signs = (p.signs || []).filter(x => x.s !== 'flower'); await DB.put('plants', p); await reload(); openPlant(id); } break; }
+    case 'signs-clear': { const p = PLANTS.find(x => x.id === id); if(p){ p.signs = (p.signs || []).filter(x => x.s === 'flower' || x.s === 'growth'); await DB.put('plants', p); await reload(); toast('Super, alertes effacées ✅'); openPlant(id); } break; }
     case 'reading-del': if(confirm('Supprimer cette mesure ?')){ await DB.del('readings', id); openPlant(el.dataset.plant); } break;
     case 'unwater': unwater(id); break;
     case 'postpone': postpone(id); break;
