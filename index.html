@@ -982,7 +982,7 @@ async function plantnet(path, photos){
 /* =========================================================
    10. SCANNER
    ========================================================= */
-let MODE = 'identify', SHOTS = [], LAST = [], DIAG_PLANT = null, LAST_DISEASE = null;
+let MODE = 'identify', SHOTS = [], LAST = [], DIAG_PLANT = null, LAST_DISEASE = null, PENDING_DIAG = null;
 const ORGANS = [['auto','Auto'],['leaf','Feuille'],['flower','Fleur'],['fruit','Fruit'],['bark','Tige / écorce']];
 function setMode(m){
   MODE = m;
@@ -1034,11 +1034,12 @@ function sp(r){
     genus:s.genus?.scientificNameWithoutAuthor || '', family:s.family?.scientificNameWithoutAuthor || '',
     score:r.score || 0, imgs:(r.images||[]).map(i => i.url?.m || i.url?.s).filter(Boolean) };
 }
-function renderIdentify(){
-  const out = $('#scan-result');
+function renderIdentify(target){
+  const out = target || $('#scan-result');
   if(!LAST.length){ out.innerHTML = '<p class="warn">Aucun résultat.</p>'; return; }
   const low = (LAST[0].score || 0) < .3;
-  out.innerHTML = `<h2>Résultats</h2>
+  out.innerHTML = `<h2>${target ? 'Quelle est cette plante ?' : 'Résultats'}</h2>
+    ${target ? '<p class="small muted">Choisis la bonne espèce pour l’ajouter à tes plantes, avec le diagnostic dans ses notes.</p>' : ''}
     ${low ? '<p class="note">Confiance faible : ajoute une photo d’un autre organe (fleur, feuille de près) et compare avec les images de référence.</p>' : ''}
     ${LAST.map((r,i) => { const s = sp(r), pct = Math.round(s.score*100); return `
       <button class="card result" data-action="species" data-i="${i}">
@@ -1062,7 +1063,31 @@ function renderDiseases(list){
         <div class="bar" role="img" aria-label="Confiance ${pct} %"><i style="width:${pct}%"></i></div>
         <span class="small muted">${pct} % de confiance</span>
         ${imgs.length ? `<div class="refs">${imgs.map(u => `<img src="${esc(u)}" alt="Image de référence" loading="lazy">`).join('')}</div>` : ''}</div>`; }).join('')}
-    ${DIAG_PLANT ? `<button class="btn ghost block" data-action="diag-note">📝 Noter le diagnostic dans la fiche</button>` : ''}`;
+    ${DIAG_PLANT ? `<button class="btn ghost block" data-action="diag-note">📝 Noter le diagnostic dans la fiche</button>`
+      : `<div class="card"><h3>🪴 Suivre cette plante ?</h3>
+        <p class="small">Ajoute-la à tes plantes pour suivre son traitement, son arrosage et son évolution en photos.</p>
+        <button class="btn block" data-action="diag-identify">🔍 Identifier et ajouter à mes plantes</button>
+        ${PLANTS.length ? `<p class="small muted" style="margin:12px 0 4px">Ou c’est une plante que tu as déjà :</p>
+          <div class="row"><select id="diag-plant" aria-label="Plante existante" style="flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+            ${PLANTS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+          <button class="btn ghost" data-action="diag-link" style="flex:none">📝 Noter dans sa fiche</button></div>` : ''}
+      </div><div id="diag-identify"></div>`}`;
+}
+const diagNoteText = r => `${fmtDate(Date.now())} : diagnostic « ${r.label || r.description || r.name} » (${Math.round((r.score||0)*100)} %)`;
+async function diagIdentify(btn){
+  btn.disabled = true; btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Identification…';
+  const box = $('#diag-identify');
+  try{
+    const data = await plantnet('/v2/identify/all?nb-results=6', SHOTS);
+    LAST = data.results || []; PENDING_DIAG = LAST_DISEASE; renderIdentify(box);
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ box.innerHTML = `<p class="warn">${esc(e.message)}</p>`; }
+  btn.disabled = false; btn.textContent = '🔍 Identifier et ajouter à mes plantes';
+}
+async function diagLink(){
+  const p = PLANTS.find(x => x.id === $('#diag-plant')?.value); if(!p || !LAST_DISEASE) return;
+  p.notes = `${p.notes ? p.notes + '\n' : ''}${diagNoteText(LAST_DISEASE)}`;
+  await DB.put('plants', p); await reload(); toast(`Noté dans la fiche de ${p.name}`); openPlant(p.id);
 }
 function openSpecies(i){
   const s = sp(LAST[i]), c = getCare(s.genus, s.family);
@@ -1080,7 +1105,9 @@ function newPlant(fields){
 async function addFromScan(i){
   const s = sp(LAST[i]), c = getCare(s.genus, s.family);
   let photo = ''; try{ photo = (await resize(SHOTS[0].file, 600, .8)).dataURL; }catch{}
-  const p = newPlant({name:s.common || s.sci, sci:s.sci, genus:s.genus, family:s.family, photo, interval:c.water});
+  const p = newPlant({name:s.common || s.sci, sci:s.sci, genus:s.genus, family:s.family, photo, interval:c.water,
+    notes:MODE === 'diagnose' && PENDING_DIAG ? diagNoteText(PENDING_DIAG) : ''});
+  PENDING_DIAG = null;
   await DB.put('plants', p);
   if(SHOTS[0]){ try{ const big = await resize(SHOTS[0].file, 1000, .8); await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big.dataURL}); p.lastPhoto = Date.now(); await DB.put('plants', p); }catch{} }
   await reload();
@@ -1789,6 +1816,8 @@ document.addEventListener('click', async e => {
     case 'manual-add': manualAdd(); break;
     case 'manual-add-g': manualAdd(); requestAnimationFrame(() => { const s = $('#manual-form select[name=genus]'); if(s){ s.value = el.dataset.g; $('#manual-form input[name=name]').value = getCare(el.dataset.g,'').name; } }); break;
     case 'diagnose-plant': closeSheet(); showTab('scan'); setMode('diagnose'); DIAG_PLANT = id; renderDiagContext(); break;
+    case 'diag-identify': diagIdentify(el); break;
+    case 'diag-link': diagLink(); break;
     case 'diag-note': {
       const p = PLANTS.find(x => x.id === DIAG_PLANT), r = LAST_DISEASE;
       if(p && r){ p.notes = `${p.notes ? p.notes + '\n' : ''}${fmtDate(Date.now())} : diagnostic « ${r.label || r.description || r.name} » (${Math.round((r.score||0)*100)} %)`;
