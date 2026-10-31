@@ -1172,8 +1172,15 @@ async function openPlant(id, advice){
     <div class="card"><h3>💧 Arrosage</h3>
       <p>Prochain : <span class="pill ${w.cls}">${w.label}</span>${p.lastWatered ? ` <span class="small muted">· dernier le ${fmtDate(p.lastWatered)}</span>` : ''}</p>
       ${w.rain ? '<p class="small muted">🌧️ La pluie récente compte comme un arrosage.</p>' : ''}
-      <div class="row"><button class="btn" data-action="water" data-id="${p.id}">💧 Arrosée</button>
-      <button class="btn ghost" data-action="diagnose-plant" data-id="${p.id}">🩺 Diagnostic</button></div></div>
+      <div class="row"><button class="btn" data-action="water" data-id="${p.id}">💧 Arrosée aujourd’hui</button>
+      <button class="btn ghost" data-action="diagnose-plant" data-id="${p.id}">🩺 Diagnostic</button></div>
+      <details${p.lastWatered ? '' : ' open'}><summary>📅 Arrosée un autre jour</summary>
+        <div class="row" style="margin-top:8px;align-items:flex-end">
+          <label class="field" style="flex:1;margin:0"><span>Date de l’arrosage</span><input type="date" id="water-date" max="${localISO(Date.now())}" value="${localISO(Date.now() - DAY)}"></label>
+          <button class="btn" data-action="water-date" data-id="${p.id}" style="flex:none">Enregistrer</button></div>
+        ${waterLog(p).length ? `<p class="small muted" style="margin:10px 0 4px">Derniers arrosages :</p>
+          <div class="row" style="gap:6px">${waterLog(p).slice(-8).reverse().map(t => `<span class="pill soon">${fmtDate(t)} <button data-action="water-del" data-id="${p.id}" data-t="${t}" aria-label="Supprimer l’arrosage du ${fmtDate(t)}" style="border:0;background:none;padding:0 0 0 4px;cursor:pointer;color:inherit">✕</button></span>`).join('')}</div>` : ''}
+      </details></div>
 
     ${moodHTML(p, advice)}
     ${soilHTML(p, readings)}
@@ -1237,6 +1244,7 @@ function manualAdd(){
       <label class="field"><span>Ø du pot (cm)</span><input name="diam" type="number" min="3" max="80" inputmode="numeric"></label>
     </div>${roomDatalist()}
     <label class="check"><input type="checkbox" name="outdoor"> 🌤️ Plante d’extérieur</label>
+    <label class="field"><span>Dernier arrosage (facultatif)</span><input name="watered" type="date" max="${localISO(Date.now())}"></label>
     <label class="field"><span>Photo (facultatif)</span><input name="photo" type="file" accept="image/*"></label>
     <button class="btn block" type="submit">Ajouter</button></form>`);
 }
@@ -1251,6 +1259,7 @@ async function saveManual(form){
   if(file && file.size){ try{ photo = (await resize(file, 600, .8)).dataURL; big = (await resize(file, 1000, .8)).dataURL; }catch{} }
   const p = newPlant({name:f.get('name').trim(), genus, photo, room:f.get('room').trim(), outdoor:f.get('outdoor') === 'on',
     diam:f.get('diam') ? Number(f.get('diam')) : null, interval:c.water, lastPhoto:big ? Date.now() : null});
+  if(f.get('watered')){ const [y,m,d] = f.get('watered').split('-').map(Number); setWaterLog(p, [Math.min(Date.now(), new Date(y, m-1, d, 12).getTime())]); }
   await DB.put('plants', p);
   if(big) await DB.put('photos', {id:uid(), plantId:p.id, date:Date.now(), src:big});
   await reload(); toast('Plante ajoutée 🌱'); openPlant(p.id);
@@ -1541,15 +1550,34 @@ function roundHTML(list){
       <div class="bar" role="img" aria-label="${done} sur ${items.length}"><i style="width:${items.length ? done/items.length*100 : 0}%"></i></div></div>` +
     order.map(k => `<div class="group-title">${esc(k)}</div>` + groups.get(k).map(({p,w}) => waterRow(p, w, p.lastWatered >= today)).join('')).join('');
 }
-async function water(id){
+// Historique des arrosages (le dernier fait foi pour le calcul du prochain)
+const waterLog = p => { const l = (p.waterLog || []).slice(); if(p.lastWatered && !l.length) l.push(p.lastWatered); return l.sort((a,b) => a - b); };
+function setWaterLog(p, log){
+  p.waterLog = [...new Set(log)].sort((a,b) => a - b).slice(-30);
+  p.lastWatered = p.waterLog.length ? p.waterLog[p.waterLog.length-1] : null;
+}
+async function water(id, when){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  p.prevWatered = p.lastWatered; p.lastWatered = Date.now(); p.postpone = 0;
-  await DB.put('plants', p); await reload(); toast(`${p.name} arrosée 💧`);
+  const t = when ?? Date.now(), wasLast = !p.lastWatered || t >= p.lastWatered;
+  setWaterLog(p, [...waterLog(p), t]); if(wasLast) p.postpone = 0;
+  await DB.put('plants', p); await reload();
+  toast(when ? `Arrosage du ${fmtDate(t)} enregistré 💧` : `${p.name} arrosée 💧`);
   if($('#sheet').open && $('#plant-form')?.dataset.id === id) openPlant(id);
 }
-async function unwater(id){
+async function waterOnDate(id){
+  const v = $('#water-date')?.value; if(!v){ toast('Choisis une date'); return; }
+  const [y,m,d] = v.split('-').map(Number), t = new Date(y, m-1, d, 12).getTime();
+  if(t > Date.now() + 12*3600000){ toast('La date ne peut pas être dans le futur'); return; }
+  const isToday = localISO(t) === localISO(Date.now());
+  water(id, isToday ? Date.now() : t);
+}
+async function unwater(id){ // annule l'arrosage du jour
   const p = PLANTS.find(x => x.id === id); if(!p) return;
-  p.lastWatered = p.prevWatered ?? null; p.prevWatered = null; await DB.put('plants', p); await reload();
+  const today = startOfDay(Date.now()); setWaterLog(p, waterLog(p).filter(t => t < today)); await DB.put('plants', p); await reload();
+}
+async function deleteWatering(id, t){
+  const p = PLANTS.find(x => x.id === id); if(!p) return;
+  setWaterLog(p, waterLog(p).filter(x => x !== t)); await DB.put('plants', p); await reload(); openPlant(id);
 }
 async function postpone(id){
   const p = PLANTS.find(x => x.id === id); if(!p) return;
@@ -1885,6 +1913,8 @@ document.addEventListener('click', async e => {
     case 'photo': openPhoto(id, el.dataset.plant); break;
     case 'photo-del': if(confirm('Supprimer cette photo ?')){ await DB.del('photos', id); openPlant(el.dataset.plant); } break;
     case 'water': water(id); break;
+    case 'water-date': waterOnDate(id); break;
+    case 'water-del': deleteWatering(id, Number(el.dataset.t)); break;
     case 'reading-add': readingForm(id); break;
     case 'sign': addSign(id, el.dataset.s); break;
     case 'flower-end': { const p = PLANTS.find(x => x.id === id); if(p){ p.flowering = null; p.signs = (p.signs || []).filter(x => x.s !== 'flower'); await DB.put('plants', p); await reload(); openPlant(id); } break; }
